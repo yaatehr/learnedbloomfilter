@@ -1,0 +1,77 @@
+#CMAKE CONFIG OPTIONS
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+project(learned_b VERSION 1.0)
+
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
+    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(warnings "-Wall -Wextra -Werror")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(warnings "/W4 /WX /EHsc")
+endif()
+if (NOT CONFIGURED_ONCE)
+    set(CMAKE_CXX_FLAGS "${warnings}"
+        CACHE STRING "Flags used by the compiler during all build types." FORCE)
+    set(CMAKE_C_FLAGS   "${warnings}"
+        CACHE STRING "Flags used by the compiler during all build types." FORCE)
+endif()
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_BUILD_TYPE Debug)
+
+#BEGIN PROJECT CONFIG
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Filters  
+  )
+
+add_executable(learned_b learned_benchmark.cpp)
+
+### DEPENDENCIES 
+
+set(benchmark_ROOT_DIR "" CACHE PATH "/Users/yaatehr/Programs/benchmark")
+find_path(benchmark_INCLUDE_DIR "benchmark/benchmark.h"
+  PATHS ${benchmark_ROOT_DIR}
+  PATH_SUFFIXES include
+  NO_DEFAULT_PATH)
+find_path(benchmark_INCLUDE_DIR "benchmark/benchmark.h")
+find_library(benchmark_LIBRARY NAMES "benchmark"
+  PATHS ${benchmark_ROOT_DIR}
+  PATH_SUFFIXES lib lib64
+  NO_DEFAULT_PATH)
+find_library(benchmark_LIBRARY NAMES "benchmark")
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(benchmark FOUND_VAR benchmark_FOUND
+  REQUIRED_VARS benchmark_LIBRARY
+  benchmark_INCLUDE_DIR)
+if(benchmark_FOUND)
+  set(benchmark_LIBRARIES ${benchmark_LIBRARY})
+  set(benchmark_INCLUDE_DIRS ${benchmark_INCLUDE_DIR})
+endif()
+mark_as_advanced(benchmark_INCLUDE_DIR benchmark_LIBRARY)
+list(APPEND CMAKE_PREFIX_PATH "/Users/yaatehr/programs/libtorch")
+find_package(Torch REQUIRED)
+
+
+### LINK LIBRARIES
+
+
+#BENCHMARK
+target_include_directories(learned_b PUBLIC "${benchmark_INCLUDE_DIRS}")
+target_link_libraries(learned_b "${benchmark_LIBRARIES}")
+
+#THREADS
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(learned_b Threads::Threads)
+
+
+#TORCH
+target_link_libraries(learned_b "${TORCH_LIBRARIES}")
+
+
+
+set_property(TARGET learned_b PROPERTY CXX_STANDARD 11)
+set(CONFIGURED_ONCE TRUE CACHE INTERNAL
+    "A flag showing that CMake has configured at least once.")

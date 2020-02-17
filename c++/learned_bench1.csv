@@ -1,0 +1,8 @@
+2019-11-18 00:15:45
+Running ./bin/learned_b
+Run on (8 X 2500 MHz CPU s)
+CPU Caches:
+  L1 Data 32K (x4)
+  L1 Instruction 32K (x4)
+  L2 Unified 262K (x4)
+  L3 Unified 6291K (x1)
