@@ -204,7 +204,7 @@ class EncodedStringLabelDataset(Dataset):
         self.tokenizer = UrlTokenizer(args)
         self._init_private_vars(urls_by_category)
         self._init_embedding()
-        # self.selectSubset(labelSubset=args.in_set_labels, normalizeWeights=False)
+        self.selectSubset(labelSubset=None, balanceWeights=True) #balance binary classifications
 
     def __len__(self):
         if self.args.use_char_encoding:
@@ -242,40 +242,44 @@ class EncodedStringLabelDataset(Dataset):
         data = torch.Tensor(data)
         return data, label
 
-    def selectSubset(self, labelSubset=None, normalizeWeights=False):              
-        indToRemove = copy.copy(self.class_indices)
-        existing_classes = set(self.string_labels)
-        for label in labelSubset:
-            if label not in existing_classes:
-                raise Exception("Invalid class name in labelSubset: " + label)
-            del indToRemove[label]
-        indices = []
-        for l in [indToRemove[key] for key in indToRemove.keys()]:
-            indices.extend(l)
-        indices = np.array(indices)
-        self.texts = np.delete(np.array(self.texts), indices).tolist()
-        self.string_labels = np.delete(np.array(self.string_labels), indices).tolist()
-        if self.tokens:
-            self.tokens = np.delete(np.array(self.tokens), indices).tolist()
+    def selectSubset(self, labelSubset=None, balanceWeights=False):
+        if labelSubset:              
+            indToRemove = copy.copy(self.class_indices)
+            existing_classes = set(self.string_labels)
+            for label in labelSubset:
+                if label not in existing_classes:
+                    raise Exception("Invalid class name in labelSubset: " + label)
+                del indToRemove[label]
+            indices = []
+            for l in [indToRemove[key] for key in indToRemove.keys()]:
+                indices.extend(l)
+            indices = np.array(indices)
+            self.texts = np.delete(np.array(self.texts), indices).tolist()
+            self.string_labels = np.delete(np.array(self.string_labels), indices).tolist()
+            self.labels = np.delete(np.array(self.labels), indices).astype(int).tolist()
+            if self.tokens:
+                self.tokens = np.delete(np.array(self.tokens), indices).tolist()
 
-        assert len(self.texts) == len(self.string_labels)
-        if self.tokens:
-            assert len(self.texts) == len(self.tokens)
+            self._check_assertions()
 
         #build new class_indices structure
-        min_label_samples = min([len(self.class_indices[i]) for i in labelSubset])
+        num_in_inset = np.sum(self.labels)
+        num_in_outset = 0 #counter to balance weights
         self.class_indices = {}
         self.counter = Counter()
         new_texts = []
+        new_string_labels = []
         new_labels = []
         new_tokens = []
         for i, text in enumerate(self.texts):
             label = self.string_labels[i]
-            if(normalizeWeights):
-                if self.counter[label] == min_label_samples:
+            if(balanceWeights):
+                if not self.labels[i]:
+                    num_in_outset +=1
+                elif num_in_outset >= num_in_inset:
                     continue
                 new_texts.append(text)
-                new_labels.append(label)
+                new_string_labels.append(label)
                 if self.tokens:
                     new_tokens.append(self.tokens[i])
             self.counter[label] +=1
@@ -283,20 +287,30 @@ class EncodedStringLabelDataset(Dataset):
                 self.class_indices[label].append(i)
             else:
                 self.class_indices[label] = [i]
-            if label in self.args.in_set_labels:
-                self.labels.append(1)
+            if self.labels[i]:
+                new_labels.append(1)
             else:
-                self.labels.append(0)
+                new_labels.append(0)
 
-        if(normalizeWeights):
+        if(balanceWeights):
             self.texts = new_texts
-            self.string_labels = new_labels
+            self.string_labels = new_string_labels
+            self.labels = new_labels
             if self.tokens:
                 self.tokens = new_tokens
-        assert len(self.texts) == len(self.string_labels), "impath length %d and imclass length %d " % (len(self.texts), len(self.string_labels))
-        if self.tokens:
-            assert len(self.texts) == len(self.tokens)
+            num_positive_labels = np.sum(self.labels)
+            num_negative_labels = (len(self.labels) - num_positive_labels)
+            num_labels_to_add = num_positive_labels - num_negative_labels
+            print("DEBUG: Difference in labels %d" % num_labels_to_add)
+            if num_labels_to_add != 0:
+                if num_labels_to_add > 0:
+                    self._add_negative_samples(num_labels_to_add)
+                else:
+                    self._remove_negative_samples(num_labels_to_add*-1)
+            assert num_positive_labels == (len(self.labels) - num_positive_labels), "number of positive samples %d should match negative %d" % (num_positive_labels, len(self.labels) - num_positive_labels)
+        self._check_assertions()
         print("Selected the following distribution: ", self.counter)
+        print("With %d positive labels and %d negative labels" % (num_positive_labels, (len(self.labels) - num_positive_labels)))
 
     def _init_private_vars(self, urls_by_category):
         texts = []
@@ -313,8 +327,6 @@ class EncodedStringLabelDataset(Dataset):
                 except:
                     pass
 
-        assert len(texts) == len(labels)
-        assert len(tokens) == len(texts)
         self.texts = texts
         self.string_labels = labels
         if not self.args.use_char_encoding:
@@ -323,24 +335,13 @@ class EncodedStringLabelDataset(Dataset):
             self.tokens = None
 
         #init private vars
-        self.labels = []
         self.tokens = tokens
-        self.class_indices = {}
-        self.counter = Counter()
         self.max_length = self.args.max_length
 
         #populate class index dictionary and binary labels
-        for i, text in enumerate(texts):
-            label = self.string_labels[i]
-            self.counter[label] += 1
-            if label not in self.class_indices.keys():
-                self.class_indices[label] = [i]
-            else:
-                self.class_indices[label].append(i)
-            if label in self.args.in_set_labels:
-                self.labels.append(1)
-            else:
-                self.labels.append(0)
+        self._init_class_indices_and_counter(build_labels=True)
+
+        self._check_assertions()
 
     def _init_embedding(self):
         if self.args.use_char_encoding:
@@ -348,7 +349,7 @@ class EncodedStringLabelDataset(Dataset):
             self.number_of_characters = self.args.number_of_characters + \
                 len(self.args.extra_characters)
             self.identity_mat = np.identity(self.number_of_characters)
-        else:
+        elif self.args.use_word2vec_encoding:
             #TODO switch cases for differnt delims'
             if self.args.debug:
                 print("DEBUG: initializing token word2vec model")
@@ -365,3 +366,93 @@ class EncodedStringLabelDataset(Dataset):
                 for search_term in ['http', 'com', 'google', 'index', 'php', 'uk']}
                 print(similar_words)
             self.vocabulary = self.tokenizer.alphabet
+        else:
+            pass
+            # raise Exception("not implemented")
+            #TODO add glove embedding
+            
+
+    def _check_assertions(self):
+        assert len(self.texts) == len(self.string_labels), "texts length %d and string_labels length %d " % (len(self.texts), len(self.string_labels))
+        assert len(self.texts) == len(self.labels), "texts length %d and binary labels length %d " % (len(self.texts), len(self.labels))
+        if self.tokens:
+            assert len(self.texts) == len(self.tokens), "texts length %d and tokens length %d " % (len(self.texts), len(self.tokens))
+        num_indexes = 0
+        for l in self.class_indices.values():
+            num_indexes += len(l)
+        assert len(self.texts) == num_indexes, "num texts %d must match num class indexes % d" % (len(self.texts), num_indexes)
+ 
+    def _add_negative_samples(self, num_to_add):
+        #TODO make this process more clear (ie rename the input path param)
+        print(len(self.texts))
+        print(sum(self.labels))
+        texts, labels, tokens, number_of_classes, sample_weights = load_data(self.args)
+        print("length of all loaded texts is", len(texts))
+        assert len(texts) >= num_to_add, "insufficient urls loaded to pad inputs, need %d more" % (num_to_add - len(texts))
+        #TODO extract only the negative things
+        indices = np.random.choice(len(texts), len(texts) - num_to_add, replace=False)
+
+        print(num_to_add)
+        texts = np.delete(np.array(texts), indices).tolist()
+        string_labels = ["misc"]*num_to_add
+        labels = np.delete(np.array(labels), indices).astype(int).tolist()
+        if self.tokens:
+            tokens = np.delete(np.array(tokens), indices).tolist()
+
+        print(len(texts), len(string_labels), len(labels), len(tokens))
+
+        self.texts.extend(texts)
+        self.string_labels.extend(string_labels)
+        self.labels.extend(labels)
+        if self.tokens:
+            self.tokens.extend(tokens)
+
+        misc_indexes = range(len(self.texts), len(self.texts) + num_to_add)
+
+        if "misc" in self.class_indices.keys():
+            self.class_indices["misc"].extend(misc_indexes)
+        else:
+            self.class_indices["misc"] = list(misc_indexes)
+
+        self._check_assertions()
+
+    def _remove_negative_samples(self, num_to_remove):
+        #TODO make this process more clear (ie rename the input path param)
+
+        negative_sample_indices = []
+        for key in self.class_indices.keys():
+            if key in self.args.in_set_labels:
+                continue
+            for class_index in self.class_indices[key]:
+                negative_sample_indices.append(class_index)
+
+        indices = np.random.choice(negative_sample_indices, num_to_remove, replace=False)
+
+        self.texts = np.delete(np.array(self.texts), indices).tolist()
+        self.string_labels = np.delete(np.array(self.string_labels), indices).tolist()
+        self.labels = np.delete(np.array(self.labels), indices).astype(int).tolist()
+        if self.tokens:
+            self.tokens = np.delete(np.array(self.tokens), indices).tolist()
+
+        self._init_class_indices_and_counter()
+
+        self._check_assertions()
+
+    def _init_class_indices_and_counter(self, build_labels=False):
+        self.class_indices = {}
+        self.counter = Counter()
+        if build_labels:
+            self.labels = []
+        for i, text in enumerate(self.texts):
+            label = self.string_labels[i]
+            self.counter[label] +=1
+            if label in self.class_indices.keys():
+                self.class_indices[label].append(i)
+            else:
+                self.class_indices[label] = [i]
+
+            if build_labels:
+                if label in self.args.in_set_labels:
+                    self.labels.append(1)
+                else:
+                    self.labels.append(0)

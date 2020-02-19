@@ -96,6 +96,7 @@ if __name__ == "__main__":
         "--data_path",
         type=str,
         default=os.path.join(DIRECTORY_ROOT, "input/randlabelurls.txt"),
+        # default=os.path.join(DIRECTORY_ROOT, "input/classified_web_crawl_urls.txt"),
     )  # TODO (finetuning - change this to point to the true training data)
     parser.add_argument("--validation_split", type=float, default=0.2)
     parser.add_argument("--label_column", type=str, default="Label")
@@ -151,7 +152,7 @@ if __name__ == "__main__":
     # Rnn params
     parser.add_argument("--hidden_dim", type=int, default=16)
     parser.add_argument("--num_hidden_layers", type=int, default=1)  # TODO deprecate?
-    parser.add_argument("--bidirectional", type=bool, default=False)
+    parser.add_argument("--bidirectional", type=int, default=0, choices=[0, 1])
 
     # logging params
     parser.add_argument("--log_path", type=str, default="./logs/")
@@ -162,7 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, default="")
 
     parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
-    parser.add_argument("--use_string_labels", type=bool, default=True)
+    parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])
+    parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])
     # parser.add_argument("--api_key", type=str, required=True)
 
     parser.add_argument("--debug", type=bool, default=True)
