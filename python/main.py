@@ -13,7 +13,7 @@ from classifier import train
 
 def query_google_sb(args):
     extractor = processing.WebCrawlExtractor(args)
-    # url_classifier = processing.UrlClassifier(args)
+    url_classifier = processing.UrlClassifier(args)
     # unclassified_url_path = os.path.join(args.root, 'input/clean_dedup_urls.txt')
     unclassified_url_path = os.path.join(
         args.root, "input/webcrawl_unique_len_12_prefixes.txt"
@@ -61,16 +61,26 @@ def train_model(args):
     dataset.__getitem__(1)
     train.run(args)
 
+def load_shallalist(args):
+
+    urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+    with open(urls_by_category_path, 'rb') as fp:
+        urls_by_category = pickle.load(fp)
+
+    dataset = data_loader.EncodedStringLabelDataset(urls_by_category, args)
+
+    print(dataset.__getitem__(0))
+
 def main_loop(args):
 
     # train_model(args)
-
+    load_shallalist(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
 
 
-# NOTE CITATION inspiration for model from https://github.com/ahmedbesbes/character-based-cnn
+# NOTE CITATION infrastructure for model training from https://github.com/ahmedbesbes/character-based-cnn
 if __name__ == "__main__":
     URL_ALPHABET = string.ascii_letters + string.digits + "_.~-" + ":/?#[]@!$&'()*+,;="
     URL_DELIM = ":/?#.&"
@@ -151,6 +161,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="./modelsaves/")
     parser.add_argument("--model_name", type=str, default="")
 
+    parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
+    parser.add_argument("--use_string_labels", type=bool, default=True)
     # parser.add_argument("--api_key", type=str, required=True)
 
     parser.add_argument("--debug", type=bool, default=True)

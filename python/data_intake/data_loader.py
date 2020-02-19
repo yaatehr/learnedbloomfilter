@@ -9,6 +9,7 @@ import concurrent.futures
 from collections import Counter
 import numpy as np
 import gensim
+import copy
 
 
 #My packages
@@ -100,7 +101,7 @@ def load_data(args):
     number_of_classes = len(set(labels))
 
     print(
-        f'data loaded successfully with {len(texts)} rows and {number_of_classes} labels')
+        'data loaded successfully with {len(texts)} rows and {number_of_classes} labels')
     print('Distribution of the classes', Counter(labels))
 
     sample_weights = get_sample_weights(labels)
@@ -197,3 +198,170 @@ class EncodedDataset(Dataset):
 
         return data, label
 
+class EncodedStringLabelDataset(Dataset):
+    def __init__(self, urls_by_category, args):
+        self.args = args
+        self.tokenizer = UrlTokenizer(args)
+        self._init_private_vars(urls_by_category)
+        self._init_embedding()
+        # self.selectSubset(labelSubset=args.in_set_labels, normalizeWeights=False)
+
+    def __len__(self):
+        if self.args.use_char_encoding:
+            return len(self.texts)
+        else:
+            return len(self.tokens)
+
+    def __getitem__(self, index):
+
+        if self.args.use_char_encoding:
+            raw_text = self.texts[index]
+            data = np.array([self.identity_mat[self.vocabulary.index(i)] for i in list(raw_text)[::-1] if i in self.vocabulary],
+                            dtype=np.float32) #TODO why is this backwards?
+            if len(data) > self.max_length:
+                data = data[:self.max_length]
+            elif 0 < len(data) < self.max_length:
+                data = np.concatenate(
+                    (data, np.zeros((self.max_length - len(data), self.number_of_characters), dtype=np.float32)))
+            elif len(data) == 0:
+                data = np.zeros(
+                    (self.max_length, self.number_of_characters), dtype=np.float32)
+        else:
+            tokens = self.tokens[index]
+            data = np.array([self.model.wv[t] for t in tokens[::-1] if t is not None])
+            if len(data) > self.max_length:
+                data = data[:self.max_length]
+            elif 0 < len(data) < self.max_length:
+                data = np.concatenate(
+                    (data, np.zeros((self.max_length - len(data), self.args.embedding_size), dtype=np.float32))) #TODO is this the right dtype?
+            elif len(data) == 0:
+                    data = np.zeros(
+                        (self.max_length, self.args.embedding_size), dtype=np.float32)
+
+        label = self.string_labels[index]
+        data = torch.Tensor(data)
+        return data, label
+
+    def selectSubset(self, labelSubset=None, normalizeWeights=False):              
+        indToRemove = copy.copy(self.class_indices)
+        existing_classes = set(self.string_labels)
+        for label in labelSubset:
+            if label not in existing_classes:
+                raise Exception("Invalid class name in labelSubset: " + label)
+            del indToRemove[label]
+        indices = []
+        for l in [indToRemove[key] for key in indToRemove.keys()]:
+            indices.extend(l)
+        indices = np.array(indices)
+        self.texts = np.delete(np.array(self.texts), indices).tolist()
+        self.string_labels = np.delete(np.array(self.string_labels), indices).tolist()
+        if self.tokens:
+            self.tokens = np.delete(np.array(self.tokens), indices).tolist()
+
+        assert len(self.texts) == len(self.string_labels)
+        if self.tokens:
+            assert len(self.texts) == len(self.tokens)
+
+        #build new class_indices structure
+        min_label_samples = min([len(self.class_indices[i]) for i in labelSubset])
+        self.class_indices = {}
+        self.counter = Counter()
+        new_texts = []
+        new_labels = []
+        new_tokens = []
+        for i, text in enumerate(self.texts):
+            label = self.string_labels[i]
+            if(normalizeWeights):
+                if self.counter[label] == min_label_samples:
+                    continue
+                new_texts.append(text)
+                new_labels.append(label)
+                if self.tokens:
+                    new_tokens.append(self.tokens[i])
+            self.counter[label] +=1
+            if label in self.class_indices.keys():
+                self.class_indices[label].append(i)
+            else:
+                self.class_indices[label] = [i]
+            if label in self.args.in_set_labels:
+                self.labels.append(1)
+            else:
+                self.labels.append(0)
+
+        if(normalizeWeights):
+            self.texts = new_texts
+            self.string_labels = new_labels
+            if self.tokens:
+                self.tokens = new_tokens
+        assert len(self.texts) == len(self.string_labels), "impath length %d and imclass length %d " % (len(self.texts), len(self.string_labels))
+        if self.tokens:
+            assert len(self.texts) == len(self.tokens)
+        print("Selected the following distribution: ", self.counter)
+
+    def _init_private_vars(self, urls_by_category):
+        texts = []
+        labels = []
+        tokens = []
+        for key in urls_by_category.keys():
+            for url in urls_by_category[key]:
+                url = url.strip()
+                try:
+                    token = self.tokenizer.tokenize(url)
+                    tokens.append(token)
+                    texts.append(url)
+                    labels.append(key)
+                except:
+                    pass
+
+        assert len(texts) == len(labels)
+        assert len(tokens) == len(texts)
+        self.texts = texts
+        self.string_labels = labels
+        if not self.args.use_char_encoding:
+            self.tokens = tokens
+        else:
+            self.tokens = None
+
+        #init private vars
+        self.labels = []
+        self.tokens = tokens
+        self.class_indices = {}
+        self.counter = Counter()
+        self.max_length = self.args.max_length
+
+        #populate class index dictionary and binary labels
+        for i, text in enumerate(texts):
+            label = self.string_labels[i]
+            self.counter[label] += 1
+            if label not in self.class_indices.keys():
+                self.class_indices[label] = [i]
+            else:
+                self.class_indices[label].append(i)
+            if label in self.args.in_set_labels:
+                self.labels.append(1)
+            else:
+                self.labels.append(0)
+
+    def _init_embedding(self):
+        if self.args.use_char_encoding:
+            self.vocabulary = self.args.alphabet + self.args.extra_characters
+            self.number_of_characters = self.args.number_of_characters + \
+                len(self.args.extra_characters)
+            self.identity_mat = np.identity(self.number_of_characters)
+        else:
+            #TODO switch cases for differnt delims'
+            if self.args.debug:
+                print("DEBUG: initializing token word2vec model")
+            # see https://github.com/RaRe-Technologies/gensim/blob/develop/gensim/models/word2vec.py for attributes & use                                                                                 
+            self.model = gensim.models.Word2Vec(self.tokens, size=self.args.embedding_size, 
+                        window=self.args.embedding_window, min_count=self.args.min_word_count, workers=4, iter=50)
+
+            print(self.model)
+            print(self.counter)
+
+            if self.args.debug:
+                print("DEBUG: word2vec model initialized")
+                similar_words = {search_term: [item[0] for item in self.model.wv.most_similar([search_term], topn=5)]
+                for search_term in ['http', 'com', 'google', 'index', 'php', 'uk']}
+                print(similar_words)
+            self.vocabulary = self.tokenizer.alphabet

@@ -32,7 +32,7 @@ The overall aim of the project is to make Learned Bloom Filters more accessible 
 
 ## Usage
 
-This package is a learned bloom filter meant to be a drop in replacement for existing generic bloom filters. It features the ability to train a sclassifer on user data in python, export that classifier to c++, and benchmark the new learned bloom filter in c++. 
+This package is a learned bloom filter meant to be a drop in replacement for existing generic bloom filters. It features the ability to train a classifer on user data in python, export that classifier to c++, and benchmark the new learned bloom filter in c++. 
 
 ### Plotting to Tensorboard
 
