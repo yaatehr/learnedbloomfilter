@@ -10,6 +10,7 @@ from collections import Counter
 import numpy as np
 import gensim
 import copy
+from sklearn.decomposition import PCA
 
 
 #My packages
@@ -137,15 +138,9 @@ class EncodedDataset(Dataset):
             self.min_word_count = args.min_word_count   # Minimum word count                        
             self.model = gensim.models.Word2Vec(self.tokens, size=self.embedding_size, 
                           window=self.embedding_window, min_count=self.min_word_count, workers=4, iter=50)
-
-
-
             print(self.model)
-            
-
             if args.debug:
                 print("DEBUG: word2vec model initialized")
-
 
                 similar_words = {search_term: [item[0] for item in self.model.wv.most_similar([search_term], topn=5)]
                   for search_term in ['http', 'com', 'google', 'index', 'php', 'uk']}
@@ -201,6 +196,7 @@ class EncodedDataset(Dataset):
 class EncodedStringLabelDataset(Dataset):
     def __init__(self, urls_by_category, args):
         self.args = args
+        np.random.seed(20)
         self.tokenizer = UrlTokenizer(args)
         self._init_private_vars(urls_by_category)
         self._init_embedding()
@@ -213,19 +209,20 @@ class EncodedStringLabelDataset(Dataset):
             return len(self.tokens)
 
     def __getitem__(self, index):
-
-        if self.args.use_char_encoding:
+        #TODO would memoizing these embeddings be too large? ie making an embedded url matrix as we go?
+        if not self.args.use_word2vec_encoding:
+            embedding_size = self.number_of_characters if self.args.use_char_encoding else self.args.embedding_size
             raw_text = self.texts[index]
-            data = np.array([self.identity_mat[self.vocabulary.index(i)] for i in list(raw_text)[::-1] if i in self.vocabulary],
+            data = np.array([self.identity_mat[self.tokenizer.alphabet.index(i)] for i in list(raw_text)[::-1] if i in self.tokenizer.alphabet],
                             dtype=np.float32) #TODO why is this backwards?
             if len(data) > self.max_length:
                 data = data[:self.max_length]
             elif 0 < len(data) < self.max_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.max_length - len(data), self.number_of_characters), dtype=np.float32)))
+                    (data, np.zeros((self.max_length - len(data), embedding_size), dtype=np.float32)))
             elif len(data) == 0:
                 data = np.zeros(
-                    (self.max_length, self.number_of_characters), dtype=np.float32)
+                    (self.max_length, embedding_size), dtype=np.float32)
         else:
             tokens = self.tokens[index]
             data = np.array([self.model.wv[t] for t in tokens[::-1] if t is not None])
@@ -344,10 +341,9 @@ class EncodedStringLabelDataset(Dataset):
         self._check_assertions()
 
     def _init_embedding(self):
+        self.number_of_characters = len(self.tokenizer.alphabet)
+
         if self.args.use_char_encoding:
-            self.vocabulary = self.args.alphabet + self.args.extra_characters
-            self.number_of_characters = self.args.number_of_characters + \
-                len(self.args.extra_characters)
             self.identity_mat = np.identity(self.number_of_characters)
         elif self.args.use_word2vec_encoding:
             #TODO switch cases for differnt delims'
@@ -359,17 +355,44 @@ class EncodedStringLabelDataset(Dataset):
 
             print(self.model)
             print(self.counter)
-
             if self.args.debug:
                 print("DEBUG: word2vec model initialized")
                 similar_words = {search_term: [item[0] for item in self.model.wv.most_similar([search_term], topn=5)]
                 for search_term in ['http', 'com', 'google', 'index', 'php', 'uk']}
                 print(similar_words)
-            self.vocabulary = self.tokenizer.alphabet
         else:
-            pass
-            # raise Exception("not implemented")
-            #TODO add glove embedding
+            # pass
+            embedding_vectors = {}
+            self.number_of_characters +=1 #add an empty character
+            # janky hack to find the dimension of glove embedding
+            glove_embedding_dim = int(self.args.embedding_path.split(".")[-2].split("d-char")[0]) 
+
+            with open(self.args.embedding_path, 'r') as f:
+                for line in f:
+                    line_split = line.strip().split(" ")
+                    vec = np.array(line_split[1:], dtype=float)
+                    char = line_split[0]
+                    embedding_vectors[char] = vec
+
+            embedding_matrix = np.zeros((self.number_of_characters, glove_embedding_dim))
+            for i, char in enumerate(self.tokenizer.alphabet):
+                i += 1
+                embedding_vector = embedding_vectors.get(char)
+                assert(embedding_vector is not None), "found character with no embedding vector " + char
+                embedding_matrix[i] = embedding_vector
+
+            print(embedding_matrix.shape)
+            if self.args.embedding_size != embedding_matrix.shape[1] :
+                pca = PCA(n_components=self.args.embedding_size)
+                pca.fit(embedding_matrix[1:])
+                embedding_matrix_pca = np.array(pca.transform(embedding_matrix[1:]))
+                embedding_matrix_pca = np.insert(embedding_matrix_pca, 0, 0, axis=0)
+                print("PCA matrix created with dims: ", embedding_matrix_pca.shape)
+                self.identity_mat = embedding_matrix_pca
+            else:
+                self.identity_mat = embedding_matrix
+
+
             
 
     def _check_assertions(self):
@@ -435,7 +458,6 @@ class EncodedStringLabelDataset(Dataset):
             self.tokens = np.delete(np.array(self.tokens), indices).tolist()
 
         self._init_class_indices_and_counter()
-
         self._check_assertions()
 
     def _init_class_indices_and_counter(self, build_labels=False):

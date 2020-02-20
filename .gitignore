@@ -608,3 +608,5 @@ python/models/model*
 
 !docs/Dsail-logo-2.png
 input/webcrawl_unique_len_12_prefixes.txt
+input/glove.6B.50d.txt
+input/glove.6B.50d-char.txt

@@ -231,82 +231,83 @@ def run(args):
         "drop_last": True,
     }
 
-    cached_data_path = os.path.join(args.root, "cached_data.pkl")
-    print(cached_data_path)
+    # cached_data_path = os.path.join(args.root, "cached_data.pkl")
+    # print(cached_data_path)
 
-    if not os.path.exists(cached_data_path):
-        (
-            texts,
-            labels,
-            tokens,
-            number_of_classes,
-            sample_weights,
-        ) = data_loader.load_data(args)
 
-        (
-            train_texts,
-            val_texts,
-            train_labels,
-            val_labels,
-            train_sample_weights,
-            _,
-            train_tokens,
-            test_tokens,
-        ) = train_test_split(
-            texts,
-            labels,
-            sample_weights,
-            tokens,
-            test_size=args.validation_split,
-            random_state=42,
-            stratify=labels,
-        )
-        training_set = data_loader.EncodedDataset(
-            texts, labels, args, tokens=train_tokens
-        )
-        validation_set = data_loader.EncodedDataset(
-            texts, labels, args, tokens=test_tokens
-        )
+    # if not os.path.exists(cached_data_path):
+    #     (
+    #         texts,
+    #         labels,
+    #         tokens,
+    #         number_of_classes,
+    #         sample_weights,
+    #     ) = data_loader.load_data(args)
 
-        if bool(args.use_sampler):
-            train_sample_weights = torch.from_numpy(train_sample_weights)
-            sampler = WeightedRandomSampler(
-                train_sample_weights.type("torch.DoubleTensor"),
-                len(train_sample_weights),
-            )
-            training_params["sampler"] = sampler
-            training_params["shuffle"] = False
+    #     (
+    #         train_texts,
+    #         val_texts,
+    #         train_labels,
+    #         val_labels,
+    #         train_sample_weights,
+    #         _,
+    #         train_tokens,
+    #         test_tokens,
+    #     ) = train_test_split(
+    #         texts,
+    #         labels,
+    #         sample_weights,
+    #         tokens,
+    #         test_size=args.validation_split,
+    #         random_state=42,
+    #         stratify=labels,
+    #     )
+    #     training_set = data_loader.EncodedDataset(
+    #         train_texts, train_labels, args, tokens=train_tokens
+    #     )
+    #     validation_set = data_loader.EncodedDataset(
+    #         val_texts, val_labels, args, tokens=test_tokens
+    #     )
 
-        training_generator = DataLoader(training_set, **training_params)
-        validation_generator = DataLoader(validation_set, **validation_params)
+    #     if bool(args.use_sampler):
+    #         train_sample_weights = torch.from_numpy(train_sample_weights)
+    #         sampler = WeightedRandomSampler(
+    #             train_sample_weights.type("torch.DoubleTensor"),
+    #             len(train_sample_weights),
+    #         )
+    #         training_params["sampler"] = sampler
+    #         training_params["shuffle"] = False
 
-        with open(cached_data_path, "wb") as f:
-            pickle.dump(
-                (
-                    texts,
-                    labels,
-                    tokens,
-                    number_of_classes,
-                    sample_weights,
-                    training_set,
-                    validation_set,
-                    training_generator,
-                    validation_generator,
-                ),
-                f,
-            )
-    else:
-        (
-            texts,
-            labels,
-            tokens,
-            number_of_classes,
-            sample_weights,
-            training_set,
-            validation_set,
-            training_generator,
-            validation_generator,
-        ) = pickle.load(open(cached_data_path, "rb"))
+    #     training_generator = DataLoader(training_set, **training_params)
+    #     validation_generator = DataLoader(validation_set, **validation_params)
+
+    #     with open(cached_data_path, "wb") as f:
+    #         pickle.dump(
+    #             (
+    #                 texts,
+    #                 labels,
+    #                 tokens,
+    #                 number_of_classes,
+    #                 sample_weights,
+    #                 training_set,
+    #                 validation_set,
+    #                 training_generator,
+    #                 validation_generator,
+    #             ),
+    #             f,
+    #         )
+    # else:
+    #     (
+    #         texts,
+    #         labels,
+    #         tokens,
+    #         number_of_classes,
+    #         sample_weights,
+    #         training_set,
+    #         validation_set,
+    #         training_generator,
+    #         validation_generator,
+    #     ) = pickle.load(open(cached_data_path, "rb"))
 
     class_names = sorted(list(set(labels)))
     class_names = [str(class_name) for class_name in class_names]

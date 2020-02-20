@@ -68,8 +68,7 @@ def load_shallalist(args):
         urls_by_category = pickle.load(fp)
 
     dataset = data_loader.EncodedStringLabelDataset(urls_by_category, args)
-
-    print(dataset.__getitem__(0))
+    # print(dataset.__getitem__(0))
 
 def main_loop(args):
 
@@ -84,8 +83,8 @@ def main_loop(args):
 if __name__ == "__main__":
     URL_ALPHABET = string.ascii_letters + string.digits + "_.~-" + ":/?#[]@!$&'()*+,;="
     URL_DELIM = ":/?#.&"
-    DEFAULT_ALPHABET = (
-        "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+ =<>()[]{}"
+    DEFAULT_ALPHABET = ( #TODO fix to add spaces to en embedding (just have vals of 0?)
+        "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+=<>()[]{}"
     )
     DIRECTORY_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -127,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_word_count", type=int, default=1)
     parser.add_argument("--embedding_window", type=int, default=3)
     parser.add_argument("--embedding_size", type=int, default=32)
+    parser.add_argument("--embedding_path", type=str, default=os.path.join(DIRECTORY_ROOT, 'input/glove.6B.50d-char.txt'))
 
     # training params
     parser.add_argument("--workers", type=int, default=1)
