@@ -8,7 +8,7 @@ class LSTMBasic(nn.Module):
         super(LSTMBasic, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim
-        self.bi = args.bidirectional
+        self.bi = args.bidirectional == 1
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
         self.embedding_size = (

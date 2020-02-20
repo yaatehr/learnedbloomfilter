@@ -50,7 +50,7 @@ class GRUBasic(nn.Module):
         return h0
 
     def forward(self, sequence):
-        # print('Sequence shape:', sequence.shape)
+        print('Sequence shape:', sequence.shape)
         gru_out, self.hidden = self.gru(
             sequence.view(len(sequence), 1, -1), self.hidden
         )

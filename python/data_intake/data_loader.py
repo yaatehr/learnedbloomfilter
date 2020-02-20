@@ -11,6 +11,7 @@ import numpy as np
 import gensim
 import copy
 from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
 
 
 #My packages
@@ -194,19 +195,28 @@ class EncodedDataset(Dataset):
         return data, label
 
 class EncodedStringLabelDataset(Dataset):
-    def __init__(self, urls_by_category, args):
+    def __init__(self, args, urls_by_category=None, init_tuple=None):
         self.args = args
         np.random.seed(20)
         self.tokenizer = UrlTokenizer(args)
-        self._init_private_vars(urls_by_category)
-        self._init_embedding()
-        self.selectSubset(labelSubset=None, balanceWeights=True) #balance binary classifications
+        if urls_by_category:
+            self._init_private_vars(urls_by_category)
+            self._init_embedding()
+            self.selectSubset(labelSubset=None, balanceWeights=True) #balance binary classifications
+        elif init_tuple: 
+            self.texts, self.string_labels, self.labels, self.tokens = init_tuple
+            self._init_class_indices_and_counter()
+            self._check_assertions()
+            self._init_embedding()
+
+        else:
+            raise Exception("must initiate the class with urls_by_category or use the init_tuple")
 
     def __len__(self):
-        if self.args.use_char_encoding:
-            return len(self.texts)
-        else:
+        if self.args.use_word2vec_encoding:
             return len(self.tokens)
+        else:
+            return len(self.texts)
 
     def __getitem__(self, index):
         #TODO would memoizing these embeddings be too large? ie making an embedded url matrix as we go?
@@ -215,27 +225,27 @@ class EncodedStringLabelDataset(Dataset):
             raw_text = self.texts[index]
             data = np.array([self.identity_mat[self.tokenizer.alphabet.index(i)] for i in list(raw_text)[::-1] if i in self.tokenizer.alphabet],
                             dtype=np.float32) #TODO why is this backwards?
-            if len(data) > self.max_length:
-                data = data[:self.max_length]
-            elif 0 < len(data) < self.max_length:
+            if len(data) > self.args.max_length:
+                data = data[:self.args.max_length]
+            elif 0 < len(data) < self.args.max_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.max_length - len(data), embedding_size), dtype=np.float32)))
+                    (data, np.zeros((self.args.max_length - len(data), embedding_size), dtype=np.float32)))
             elif len(data) == 0:
                 data = np.zeros(
-                    (self.max_length, embedding_size), dtype=np.float32)
+                    (self.args.max_length, embedding_size), dtype=np.float32)
         else:
             tokens = self.tokens[index]
             data = np.array([self.model.wv[t] for t in tokens[::-1] if t is not None])
-            if len(data) > self.max_length:
-                data = data[:self.max_length]
-            elif 0 < len(data) < self.max_length:
+            if len(data) > self.args.max_length:
+                data = data[:self.args.max_length]
+            elif 0 < len(data) < self.args.max_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.max_length - len(data), self.args.embedding_size), dtype=np.float32))) #TODO is this the right dtype?
+                    (data, np.zeros((self.args.max_length - len(data), self.args.embedding_size), dtype=np.float32))) #TODO is this the right dtype?
             elif len(data) == 0:
                     data = np.zeros(
-                        (self.max_length, self.args.embedding_size), dtype=np.float32)
+                        (self.args.max_length, self.args.embedding_size), dtype=np.float32)
 
-        label = self.string_labels[index]
+        label = self.labels[index]
         data = torch.Tensor(data)
         return data, label
 
@@ -326,18 +336,13 @@ class EncodedStringLabelDataset(Dataset):
 
         self.texts = texts
         self.string_labels = labels
-        if not self.args.use_char_encoding:
+        if self.args.use_word2vec_encoding:
             self.tokens = tokens
         else:
             self.tokens = None
 
-        #init private vars
-        self.tokens = tokens
-        self.max_length = self.args.max_length
-
         #populate class index dictionary and binary labels
         self._init_class_indices_and_counter(build_labels=True)
-
         self._check_assertions()
 
     def _init_embedding(self):
@@ -478,3 +483,53 @@ class EncodedStringLabelDataset(Dataset):
                     self.labels.append(1)
                 else:
                     self.labels.append(0)
+
+    def split_train_val(self):
+        if not self.tokens:
+            (
+                train_texts,
+                val_texts,
+                train_string_labels,
+                val_string_labels,
+                train_labels,
+                val_labels
+            ) = train_test_split(
+                self.texts,
+                self.string_labels,
+                self.labels,
+                test_size=self.args.validation_split,
+                random_state=42,
+                stratify=self.labels
+            )
+
+            self.texts = train_texts
+            self.string_labels = train_string_labels
+            self.labels = train_labels
+            self._init_class_indices_and_counter()
+            return (val_texts, val_string_labels, val_labels, None)
+        else:
+            (
+                train_texts,
+                val_texts,
+                train_string_labels,
+                val_string_labels,
+                train_labels,
+                val_labels,
+                train_tokens,
+                val_tokens
+            ) = train_test_split(
+                self.texts,
+                self.string_labels,
+                self.labels,
+                self.tokens,
+                test_size=self.args.validation_split,
+                random_state=42,
+                stratify=self.labels
+            )
+
+            self.texts = train_texts
+            self.string_labels = train_string_labels
+            self.labels = train_labels
+            self.tokens = train_tokens
+            self._init_class_indices_and_counter()
+            return (val_texts, val_string_labels, val_labels, val_tokens)

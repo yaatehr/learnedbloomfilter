@@ -61,19 +61,21 @@ def train_model(args):
     dataset.__getitem__(1)
     train.run(args)
 
-def load_shallalist(args):
+def load_dataset_from_shallalist(args):
 
     urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
     with open(urls_by_category_path, 'rb') as fp:
         urls_by_category = pickle.load(fp)
 
-    dataset = data_loader.EncodedStringLabelDataset(urls_by_category, args)
+    dataset = data_loader.EncodedStringLabelDataset(args, urls_by_category)
+    return dataset
     # print(dataset.__getitem__(0))
 
 def main_loop(args):
 
     # train_model(args)
-    load_shallalist(args)
+    # dataset = load_dataset_from_shallalist(args)
+    train.run(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -107,7 +109,7 @@ if __name__ == "__main__":
         "--sep", type=str, default="\s+"
     )  # TODO update if we need to seperate by commas
     parser.add_argument("--num_text_processing_threads", type=int, default=2)
-    parser.add_argument("--use_char_encoding", type=bool, default=False)
+    parser.add_argument("--use_char_encoding", type=int, default=0)
 
     # parser.add_argument('--steps', nargs='+', default=['lower'])
     # parser.add_argument('--group_labels', type=int, default=1, choices=[0, 1])

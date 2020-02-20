@@ -296,6 +296,7 @@ def run(args):
     #             ),
     #             f,
     #         )
+    #         print("caching complete")
     # else:
     #     (
     #         texts,
@@ -308,9 +309,34 @@ def run(args):
     #         training_generator,
     #         validation_generator,
     #     ) = pickle.load(open(cached_data_path, "rb"))
+    #     print("loaded cached training data")
 
-    class_names = sorted(list(set(labels)))
+    urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+    with open(urls_by_category_path, 'rb') as fp:
+        urls_by_category = pickle.load(fp)
+    training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+    init_tuple = training_set.split_train_val()
+    validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+
+
+    if bool(args.use_sampler):
+        train_sample_weights = torch.from_numpy(train_sample_weights)
+        sampler = WeightedRandomSampler(
+            train_sample_weights.type("torch.DoubleTensor"),
+            len(train_sample_weights),
+        )
+        training_params["sampler"] = sampler
+        training_params["shuffle"] = False
+
+    training_generator = DataLoader(training_set, **training_params)
+    validation_generator = DataLoader(validation_set, **validation_params)
+
+    train_labels = training_set.labels
+
+    class_names = sorted(list(set(train_labels)))
     class_names = [str(class_name) for class_name in class_names]
+    number_of_classes = len(class_names)
+
 
     # model = embedding_cnn.EmbeddingCnn(args, number_of_classes)
     # model = embedding_rnn.GRUBasic(args, number_of_classes)
