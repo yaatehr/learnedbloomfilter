@@ -26,6 +26,25 @@ import pickle
 import gc
 
 
+def export_train_val_test(training_set, validation_set, test_set):
+    dir_path = os.path.join(training_set.args.root, "input/dataset")
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    with open(os.path.join(dir_path, "training_set.txt"), 'w') as train_file:
+        for i, _ in enumerate(training_set):
+            train_file.write(str(training_set.labels[i]) + " " + training_set.texts[i] + "\n")
+    with open(os.path.join(dir_path, "validation_set.txt"), 'w') as validation_file:
+        for i, _ in enumerate(validation_set):
+            validation_file.write(str(validation_set.labels[i]) + " " + validation_set.texts[i] + "\n")
+    with open(os.path.join(dir_path, "test_set.txt"), 'w') as test_file:
+        for i, _ in enumerate(test_set):
+            test_file.write(str(test_set.labels[i]) + " " + test_set.texts[i] + "\n")
+
+    #backup sets
+    with open(os.path.join(dir_path, "train_val_test.pkl"), 'wb') as train_file:
+        pickle.dump((training_set, validation_set, test_set), train_file)
+
+
 def train(
     model,
     training_generator,
@@ -311,12 +330,22 @@ def run(args):
     #     ) = pickle.load(open(cached_data_path, "rb"))
     #     print("loaded cached training data")
 
-    urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
-    with open(urls_by_category_path, 'rb') as fp:
-        urls_by_category = pickle.load(fp)
-    training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
-    init_tuple = training_set.split_train_val()
-    validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+    dataset_path = os.path.join(args.root, "input/dataset/train_val_test.pkl")
+    if not os.path.exists(dataset_path):
+        urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+        with open(urls_by_category_path, 'rb') as fp:
+            urls_by_category = pickle.load(fp)
+        training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+        init_tuple = training_set.split_train_val()
+        validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+        init_tuple = training_set.split_train_val(split_size=.2222222)
+        test_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+        #initialize a train val test split of 70, 10, 20
+        validation_set.select_subset(balanceWeights=True)
+        test_set.select_subset(balanceWeights=True)
+        export_train_val_test(training_set, validation_set, test_set)
+    else:
+        training_set, validation_set, test_set = pickle.load(dataset_path)
 
 
     if bool(args.use_sampler):

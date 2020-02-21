@@ -27,7 +27,6 @@ def get_sample_weights(labels):
 
 
 
-
 class Helper():
     def __init__(self, args=None):
         self.args = args
@@ -202,7 +201,7 @@ class EncodedStringLabelDataset(Dataset):
         if urls_by_category:
             self._init_private_vars(urls_by_category)
             self._init_embedding()
-            self.selectSubset(labelSubset=None, balanceWeights=True) #balance binary classifications
+            self.select_subset(labelSubset=None, balanceWeights=True) #balance binary classifications
         elif init_tuple: 
             self.texts, self.string_labels, self.labels, self.tokens = init_tuple
             self._init_class_indices_and_counter()
@@ -249,7 +248,7 @@ class EncodedStringLabelDataset(Dataset):
         data = torch.Tensor(data)
         return data, label
 
-    def selectSubset(self, labelSubset=None, balanceWeights=False):
+    def select_subset(self, labelSubset=None, balanceWeights=False):
         if labelSubset:              
             indToRemove = copy.copy(self.class_indices)
             existing_classes = set(self.string_labels)
@@ -484,7 +483,9 @@ class EncodedStringLabelDataset(Dataset):
                 else:
                     self.labels.append(0)
 
-    def split_train_val(self):
+    def split_train_val(self, split_size=None):
+        split = split_size if split_size else self.args.validation_split
+
         if not self.tokens:
             (
                 train_texts,
@@ -497,7 +498,7 @@ class EncodedStringLabelDataset(Dataset):
                 self.texts,
                 self.string_labels,
                 self.labels,
-                test_size=self.args.validation_split,
+                test_size=split,
                 random_state=42,
                 stratify=self.labels
             )
@@ -522,7 +523,7 @@ class EncodedStringLabelDataset(Dataset):
                 self.string_labels,
                 self.labels,
                 self.tokens,
-                test_size=self.args.validation_split,
+                test_size=split,
                 random_state=42,
                 stratify=self.labels
             )

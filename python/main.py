@@ -99,7 +99,7 @@ if __name__ == "__main__":
         default=os.path.join(DIRECTORY_ROOT, "input/randlabelurls.txt"),
         # default=os.path.join(DIRECTORY_ROOT, "input/classified_web_crawl_urls.txt"),
     )  # TODO (finetuning - change this to point to the true training data)
-    parser.add_argument("--validation_split", type=float, default=0.2)
+    parser.add_argument("--validation_split", type=float, default=0.1)
     parser.add_argument("--label_column", type=str, default="Label")
     parser.add_argument("--text_column", type=str, default="Text")
     parser.add_argument("--max_rows", type=int, default=None)

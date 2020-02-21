@@ -89,6 +89,6 @@
         "forward_list": "cpp",
         "valarray": "cpp"
     },
-    "python.pythonPath": "/usr/local/bin/python3",
+    "python.pythonPath": "/Users/yaatehr/miniconda3/envs/lbf/bin/python",
     "python.formatting.provider": "black"
 }
