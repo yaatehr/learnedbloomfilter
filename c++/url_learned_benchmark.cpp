@@ -108,7 +108,7 @@ public:
    void SetUp(const ::benchmark::State &state)
    {
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "ficture setup entered";
+      std::cout << "fixture setup entered";
 #endif
       filter = new LearnedBloomFilter(state.range(1), state.range(0));
       std::string key = "k" + std::to_string(state.range(2)) + std::to_string(TORCH_INPUT_LEN);

@@ -11,31 +11,72 @@ num_processes = multiprocessing.cpu_count()
 from classifier import train
 
 
-def query_google_sb(args):
+def query_google_sb(args, use_checkpoint=True):
     extractor = processing.WebCrawlExtractor(args)
     url_classifier = processing.UrlClassifier(args)
     # unclassified_url_path = os.path.join(args.root, 'input/clean_dedup_urls.txt')
+    time_now = datetime.now().strftime("%m-%d-%H:%M:%S")
     unclassified_url_path = os.path.join(
         args.root, "input/webcrawl_unique_len_12_prefixes.txt"
     )
-    classified_url_path = os.path.join(args.root, "input/classified_web_crawl_urls.txt")
+    classified_url_path = os.path.join(args.root, "input/classified_crawl_%s.txt" % time_now)
+    cached_iteration = 0
+    metadata_root = os.path.join(args.root, "python/url_gen")
 
-    time_now = str(datetime.now())[:19].replace(" ", "_")
-    checkpoint_path = os.path.join(args.root, "python-iap/url_class_%s.pkl" % (time_now))
-    metadata_path = os.path.join(args.root, "python-iap/url_class_%s.txt" % (time_now))
+    if not os.path.exists(metadata_root):
+        os.makedirs(metadata_root)
+
+    checkpoint_path = os.path.join(metadata_root, "url_class_%s.pkl" % (time_now))
+    metadata_path = os.path.join(metadata_root, "url_class_%s.txt" % (time_now))
+    print(os.path.basename(metadata_path))
+    date_of_run = datetime.strptime(os.path.basename(metadata_path)[10:].split(".")[0], "%m-%d-%H:%M:%S")
+    most_recent_run_path = None
+
+    if use_checkpoint and os.listdir(metadata_root):
+        paths = os.walk(metadata_root)
+        dates = []
+        for root, dirs, files in paths:
+            for i, path in enumerate(files):
+                date_of_run = datetime.strptime(path[10:].split(".")[0], "%m-%d-%H:%M:%S")
+                dates.append((date_of_run, i))
+            dates = sorted(dates, key=lambda x: x[0], reverse=True)
+            most_recent_run_path = os.path.join(metadata_root, files[dates[0][1]][:-3] + "txt")
+            break
+        print("most recent path found: ", most_recent_run_path)
+
+    if most_recent_run_path and os.path.exists(most_recent_run_path):
+        with open(most_recent_run_path, 'rb') as fp: #update the url paths to append
+            cached_iteration, unclassified_url_path, classified_url_path = pickle.load(fp)
+            print("Successfully loaded run metadata from %s -\n iter: %d\n unclass_path: %s\n class_path: %s" % (most_recent_run_path, cached_iteration, unclassified_url_path, classified_url_path))
 
     with open(unclassified_url_path, "r+") as ip:
         batch = []
+        fast_forwarding = most_recent_run_path != None
         for i, line in enumerate(ip):
-            if i != 0 and i % 100000 == 0:
+
+            if fast_forwarding:
+                if i < cached_iteration:
+                    continue
+                else:
+                    fast_forwarding = False
+
+            if not fast_forwarding and i != 0 and i % 100000 == 0:
                 with open(checkpoint_path, "wb") as fp:
                     pickle.dump(url_classifier, fp)
                     print("url classifier checkpoint at %s" % checkpoint_path)
                 with open(metadata_path, "wb") as fp:
                     pickle.dump((i, unclassified_url_path, classified_url_path), fp)
                     print("url classifier metadata at %s" % metadata_path)
-            if i != 0 and i % 500 == 0:
-                malicious, benign = url_classifier.query(batch)
+
+            if not fast_forwarding and i != 0 and i % 500 == 0:
+                malicious, benign, stopflag = url_classifier.query(batch)
+                if stopflag:
+                    with open(metadata_path, "wb") as fp:
+                        i-= 500*args.query_timeout
+                        pickle.dump((i, unclassified_url_path, classified_url_path), fp)
+                        print("STOPPING RUN DUE TO ERROR TIMEOUT:\n\t url classifier metadata at %s" % metadata_path)
+                        return
+
                 if not os.path.exists(classified_url_path):
                     fp = open(classified_url_path, "w+")
                     fp.write("isMalicious url\n")
@@ -62,20 +103,18 @@ def train_model(args):
     train.run(args)
 
 def load_dataset_from_shallalist(args):
-
     urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
     with open(urls_by_category_path, 'rb') as fp:
         urls_by_category = pickle.load(fp)
-
     dataset = data_loader.EncodedStringLabelDataset(args, urls_by_category)
     return dataset
     # print(dataset.__getitem__(0))
 
 def main_loop(args):
-
+    query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    train.run(args)
+    # train.run(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -167,7 +206,8 @@ if __name__ == "__main__":
     parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
     parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])
     parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])
-    # parser.add_argument("--api_key", type=str, required=True)
+    parser.add_argument("--api_key", type=str, required=True)
+    parser.add_argument("--query_timeout", type=int, default=3)
 
     parser.add_argument("--debug", type=bool, default=True)
 

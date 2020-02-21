@@ -209,6 +209,8 @@ class UrlClassifier:
         self.num_benign = 0
         self.num_failed_queries = 0
         self.max_sublist_size = 500
+        self.max_timeout = args.query_timeout
+        self.timeout = args.query_timeout
         self.query_url = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
 
     def query(self, urls):
@@ -218,6 +220,8 @@ class UrlClassifier:
         malicious_urls = []
         benign_urls = []
         for i, l in enumerate(dict_sublists):
+            if not len(l):
+                continue
             payload = {
                 "client": {"clientId": "mycompany", "clientVersion": "0.1"},
                 "threatInfo": {
@@ -240,12 +244,16 @@ class UrlClassifier:
             params = {"key": self.api_key}
             r = requests.post(self.query_url, params=params, json=payload).json()
             matches = []
-            if "matches" in r.keys():
-                for each in r["matches"]:
-                    matches.append(each["threat"]["url"])
             if "error" in r.keys():
                 self.num_failed_queries += 1
+                self.timeout -= 1
+                print(r["error"])
                 continue
+            
+            if "matches" in r.keys():
+                for match in r["matches"]:
+                    matches.append(match["threat"]["url"])
+                self.timeout = self.max_timeout
             if len(matches) > 1:
                 malicious_urls.extend(matches)
                 safe_urls = list(set(url_sublists[i]).difference(set(matches)))
@@ -258,7 +266,7 @@ class UrlClassifier:
             "Classified %d malicious and %d benign urls with %d errors"
             % (self.num_malicious, self.num_benign, self.num_failed_queries)
         )
-        return malicious_urls, benign_urls
+        return malicious_urls, benign_urls, self.timeout == 0
 
     def format_query(self, urls):
         sb_query = []
