@@ -5,11 +5,8 @@ import string
 from data_intake import data_loader, processing
 import multiprocessing
 from datetime import datetime
-
-
 num_processes = multiprocessing.cpu_count()
 from classifier import train
-
 
 def query_google_sb(args, use_checkpoint=True):
     extractor = processing.WebCrawlExtractor(args)
