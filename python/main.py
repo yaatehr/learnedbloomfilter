@@ -108,10 +108,10 @@ def load_dataset_from_shallalist(args):
     # print(dataset.__getitem__(0))
 
 def main_loop(args):
-    query_google_sb(args)
+    # query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    # train.run(args)
+    train.run(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
