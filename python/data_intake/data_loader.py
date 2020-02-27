@@ -323,6 +323,9 @@ class EncodedStringLabelDataset(Dataset):
         labels = []
         tokens = []
         for key in urls_by_category.keys():
+            if self.args.drop_out_set and key not in self.args.in_set_labels:
+                continue
+
             for url in urls_by_category[key]:
                 url = url.strip()
                 try:

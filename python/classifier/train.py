@@ -345,7 +345,21 @@ def run(args):
         test_set.select_subset(balanceWeights=True)
         export_train_val_test(training_set, validation_set, test_set)
     else:
-        training_set, validation_set, test_set = pickle.load(dataset_path)
+        try:
+            training_set, validation_set, test_set = pickle.load(dataset_path)
+        except:
+            urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+            with open(urls_by_category_path, 'rb') as fp:
+                urls_by_category = pickle.load(fp)
+            training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+            init_tuple = training_set.split_train_val()
+            validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+            init_tuple = training_set.split_train_val(split_size=.2222222)
+            test_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
+            #initialize a train val test split of 70, 10, 20
+            validation_set.select_subset(balanceWeights=True)
+            test_set.select_subset(balanceWeights=True)
+            export_train_val_test(training_set, validation_set, test_set)
 
 
     if bool(args.use_sampler):

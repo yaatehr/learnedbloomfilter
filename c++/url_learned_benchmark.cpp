@@ -264,6 +264,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 //    ->Ranges({{2, 2 << 10}, {1000, 1000000}});
 
 /* BarTest is NOT registered */
+// range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
 BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringInsertion)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterIntQuery)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});

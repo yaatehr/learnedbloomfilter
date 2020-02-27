@@ -201,9 +201,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, default="")
 
     parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
+    parser.add_argument("--drop_out_set", type=int, default=1, choices=[0,1])             #TODO Deprecate this hack?
     parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])
     parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])
-    parser.add_argument("--api_key", type=str, required=True)
+    # parser.add_argument("--api_key", type=str, required=True)
     parser.add_argument("--query_timeout", type=int, default=3)
 
     parser.add_argument("--debug", type=bool, default=True)
