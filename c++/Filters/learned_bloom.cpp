@@ -242,4 +242,11 @@ public:
 #endif
       //TODO
    }
+
+   // std::size_t hash_count()
+   // {
+   //    return filter->hash_count();
+   // }
+
+
 };

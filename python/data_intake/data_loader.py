@@ -313,6 +313,7 @@ class EncodedStringLabelDataset(Dataset):
                     self._add_negative_samples(num_labels_to_add)
                 else:
                     self._remove_negative_samples(num_labels_to_add*-1)
+                self._init_class_indices_and_counter(build_labels=False)
             assert num_positive_labels == (len(self.labels) - num_positive_labels), "number of positive samples %d should match negative %d" % (num_positive_labels, len(self.labels) - num_positive_labels)
         self._check_assertions()
         print("Selected the following distribution: ", self.counter)
@@ -399,9 +400,6 @@ class EncodedStringLabelDataset(Dataset):
             else:
                 self.identity_mat = embedding_matrix
 
-
-            
-
     def _check_assertions(self):
         assert len(self.texts) == len(self.string_labels), "texts length %d and string_labels length %d " % (len(self.texts), len(self.string_labels))
         assert len(self.texts) == len(self.labels), "texts length %d and binary labels length %d " % (len(self.texts), len(self.labels))
@@ -413,6 +411,9 @@ class EncodedStringLabelDataset(Dataset):
         assert len(self.texts) == num_indexes, "num texts %d must match num class indexes % d" % (len(self.texts), num_indexes)
  
     def _add_negative_samples(self, num_to_add):
+        """
+        Must call check assertions and init class indices and counter after this function
+        """
         #TODO make this process more clear (ie rename the input path param)
         print(len(self.texts))
         print(sum(self.labels))
@@ -425,7 +426,9 @@ class EncodedStringLabelDataset(Dataset):
         print(num_to_add)
         texts = np.delete(np.array(texts), indices).tolist()
         string_labels = ["misc"]*num_to_add
-        labels = np.delete(np.array(labels), indices).astype(int).tolist()
+        # labels = np.delete(np.array(labels), indices).astype(int).tolist()
+        labels = [0]*num_to_add
+        #TODO clean up the built in assumptions on malicious urls beign the in set before you load a new dataset
         if self.tokens:
             tokens = np.delete(np.array(tokens), indices).tolist()
 
@@ -433,6 +436,7 @@ class EncodedStringLabelDataset(Dataset):
 
         self.texts.extend(texts)
         self.string_labels.extend(string_labels)
+
         self.labels.extend(labels)
         if self.tokens:
             self.tokens.extend(tokens)
@@ -444,9 +448,10 @@ class EncodedStringLabelDataset(Dataset):
         else:
             self.class_indices["misc"] = list(misc_indexes)
 
-        self._check_assertions()
-
     def _remove_negative_samples(self, num_to_remove):
+        """
+        must call check assertions and init class indices and counter after
+        """
         #TODO make this process more clear (ie rename the input path param)
 
         negative_sample_indices = []
@@ -463,9 +468,6 @@ class EncodedStringLabelDataset(Dataset):
         self.labels = np.delete(np.array(self.labels), indices).astype(int).tolist()
         if self.tokens:
             self.tokens = np.delete(np.array(self.tokens), indices).tolist()
-
-        self._init_class_indices_and_counter()
-        self._check_assertions()
 
     def _init_class_indices_and_counter(self, build_labels=False):
         self.class_indices = {}

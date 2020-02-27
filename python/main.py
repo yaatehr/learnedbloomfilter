@@ -200,6 +200,8 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="./modelsaves/")
     parser.add_argument("--model_name", type=str, default="")
 
+    parser.add_argument("--dry_run", type=int, default=0, choices=[0,1])
+
     parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
     parser.add_argument("--drop_out_set", type=int, default=1, choices=[0,1])             #TODO Deprecate this hack?
     parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])

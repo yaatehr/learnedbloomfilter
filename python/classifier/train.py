@@ -68,6 +68,11 @@ def train(
     y_true = []
     y_pred = []
 
+    if args.dry_run:
+        i, (feats, labels) = list(enumerate(training_generator))[0]
+        pred_shape = model(feats).shape
+        print("DRY RUNNING, prediction shape will be filled with zeros", pred_shape)
+
     for iter, batch in progress_bar:
         features, labels = batch
         # print(features.shape)
@@ -76,13 +81,17 @@ def train(
             labels = labels.cuda()
 
         optimizer.zero_grad()
-        predictions = model(features)
+        if not args.dry_run:
+            predictions = model(features)
+        else:
+            predictions = torch.zeros(pred_shape)
 
         y_true += labels.cpu().numpy().tolist()
         y_pred += torch.max(predictions, 1)[1].cpu().numpy().tolist()
 
         loss = criterion(predictions, labels)
-        loss.backward(retain_graph=True)
+        if not args.dry_run:
+            loss.backward(retain_graph=True)
 
         if args.scheduler == "clr":
             scheduler.step()
@@ -346,7 +355,10 @@ def run(args):
         export_train_val_test(training_set, validation_set, test_set)
     else:
         try:
-            training_set, validation_set, test_set = pickle.load(dataset_path)
+            training_set, validation_set, test_set = pickle.load(open(dataset_path, 'rb'))
+            print("loaded train set: ", training_set.counter)
+            print("loaded val set: ", validation_set.counter)
+            print("loaded test set: ", test_set.counter)
         except:
             urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
             with open(urls_by_category_path, 'rb') as fp:
