@@ -67,3 +67,63 @@ class LSTMBasic(nn.Module):
         # TODO experiment with adding a relu here, does it increase accuracy?
         out_scores = F.log_softmax(out_space, dim=1)
         return out_scores
+
+
+class LSTMBasicX(nn.Module):
+    """
+    LSTM Basic Variant for export. Should be compativle and able to load state dict from the original LSTMBasic Class
+    """
+    def __init__(self, args, num_classes, model_path):
+        super(LSTMBasicX, self).__init__()
+        dropout = args.dropout_input
+        self.hidden_dim = args.hidden_dim
+        self.bi = args.bidirectional == 1
+        self.num_layers = 1  # TODO remove param or deprecate?
+        self.num_classes = num_classes
+        self.embedding_size = (
+            args.number_of_characters + len(args.extra_characters)
+            if args.use_char_encoding
+            else args.embedding_size * args.max_length
+        )
+
+        self.hidden = self.init_hidden()
+        self.projected_input_shape = (args.batch_size, 1, args.max_length*args.embedding_size)
+
+        self.lstm = nn.LSTM(
+            self.embedding_size,
+            hidden_size=self.hidden_dim,
+            bidirectional=self.bi,
+            batch_first=False,
+        )
+        lin_input_layers = (2 if self.bi else 1) * self.hidden_dim
+        self.hidden2out = nn.Linear(
+            lin_input_layers, self.num_classes
+        )
+
+        self.load_state_dict(torch.load(model_path))
+        #trace loaded modules
+        self.lstm = torch.jit.trace(self.lstm, torch.rand(self.projected_input_shape), self.hidden)
+        self.hidden2out = torch.jit.trace(self.hidden2out, torch.rand(lin_input_layers))
+
+    def init_hidden(self):
+        device = torch.device("cpu")
+        h0 = torch.zeros(
+            (2 if self.bi else 1) * self.num_layers, 1, self.hidden_dim
+        ).to(device)
+        h1 = torch.zeros(
+            (2 if self.bi else 1) * self.num_layers, 1, self.hidden_dim
+        ).to(device)
+        return (h0, h1)
+
+    # @torch.jit.script_method
+    def forward(self, sequence):
+        # print('Sequence shape:', sequence.shape)
+        sequence = sequence.view(len(sequence), 1, -1)
+        print("flattened sequence shape: ", sequence.shape)
+        lstm_out, _hidden = self.lstm(
+             sequence
+        ) #Assuming that we can't update the hidden state as traces LSTM no longer takes in a hidden param
+        #TODO verify this assumption
+        out_space = self.hidden2out(lstm_out[:, -1])
+        out_scores = F.log_softmax(out_space, dim=1)
+        return out_scores

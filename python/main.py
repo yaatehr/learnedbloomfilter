@@ -6,7 +6,7 @@ from data_intake import data_loader, processing
 import multiprocessing
 from datetime import datetime
 num_processes = multiprocessing.cpu_count()
-from classifier import train
+from classifier import train, export_model
 
 def query_google_sb(args, use_checkpoint=True):
     extractor = processing.WebCrawlExtractor(args)
@@ -111,7 +111,8 @@ def main_loop(args):
     # query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    train.run(args)
+    # train.run(args)
+    export_model.export_lstm(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
