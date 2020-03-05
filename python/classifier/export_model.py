@@ -98,6 +98,14 @@ def export_lstm(args, export_dataset=True):
         total_errors += test_model(base_model, test_generator)
         print("base model had %d errors total" % total_errors)
 
+        total_errors = test_model(model, validation_generator) 
+        total_errors += test_model(model, test_generator)
+        print("export model had %d errors total" % total_errors)
+
+        total_errors = test_model(traced_script_module, validation_generator) 
+        total_errors += test_model(traced_script_module, test_generator)
+        print("traced_script_module had %d errors total" % total_errors)
+
         tensor_list, label_list = extract_data(validation_set)
         tensor_list, label_list = extract_data(test_set, tensor_list=tensor_list, label_list=label_list)
         tensors = torch.stack(tensor_list, dim=0)
