@@ -157,39 +157,30 @@ std::vector<std::vector<unsigned int>> gen_ascii_string_array(int length, size_t
    return output;
 }
 
-std::vector<unsigned int> gen_random_indices(std::vector<std::string> &input_vec)
+template<typename K>
+std::vector<unsigned int> gen_random_indices(std::vector<K> &input_vec)
 {
    std::vector<unsigned int> indices(input_vec.size());
    std::iota(indices.begin(), indices.end(), 0);
-   auto rng = std::default_random_engine{};
+   unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count(); // time seed
+   auto rng = std::default_random_engine{seed1};
    std::shuffle(indices.begin(), indices.end(), rng);
 
    return indices;
-
-   // use V[indices[0]], V[indices[1]], ..., V[indices[M-1]]
 }
 
 template<typename K>
-std::vector<unsigned int> gen_random_subset_indices(std::vector<K> &input_vec, unsigned int desired_num_eles) {
-      std::vector<unsigned int> indices(input_vec.size());
-      std::iota(indices.begin(), indices.end(), 0);
-      unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count(); // time seed
-      auto rng = std::default_random_engine{seed1};
-      std::shuffle(indices.begin(), indices.end(), rng);
+std::vector<unsigned int> gen_random_indices(std::vector<K> &input_vec, unsigned int desired_num_eles) {
+      std::vector<unsigned int> indices = gen_random_indices(input_vec);
       indices.resize(desired_num_eles);
       return indices;
-
-      // for (int i = 0; i < desired_num_eles; i++){
-      //    output.push_back(input_vec[indices[i]]);
-      // }
-
 }
 
 template<typename K>
 std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desired_num_eles)
 {
-   std::vector<K> output(input_vec.size());
-   auto indices = gen_random_subset_indices(input_vec, desired_num_eles);
+   std::vector<K> output;
+   auto indices = gen_random_indices(input_vec, desired_num_eles);
    for (auto i : indices)
    {
       output.push_back(input_vec[i]);
@@ -199,15 +190,9 @@ std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desire
 }
 
 
-
 torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
 {
-   std::vector<int> indices(desired_num_eles);
-   auto rng = std::default_random_engine{};
-   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin()); // TODO this is not yet a random subset of indices. Need togenerate the indices and shuffle before copying
-   // can we index out of order without for looping?
-   std::shuffle(indices.begin(), indices.end(), rng);
-
+   std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
    auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
 
    torch::Tensor output = data.index_select(0, index_tensor ); // use narrow copy if inplace causes problems
@@ -220,13 +205,10 @@ torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &
 torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
 {
    std::vector<int> indices(desired_num_eles);
-   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin()); // TODO this is not yet a random subset of indices. Need togenerate the indices and shuffle before copying
-
+   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin());
    auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
 
-   torch::Tensor output = data.index_select(0, index_tensor ); // use narrow copy if inplace causes problems
-
-   // output = output.narrow(0, 0, desired_num_eles -1);
+   torch::Tensor output = data.index_select(0, index_tensor );
    // std::cout << output << std::endl; 
    //TODO CHECK THIS
    return output;
