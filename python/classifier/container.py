@@ -1,3 +1,5 @@
+import torch
+
 class Container(torch.nn.Module):
     def __init__(self, my_values):
         super().__init__()
