@@ -19,7 +19,7 @@
 #include <torch/script.h>
 #include <ATen/Tensor.h>
 #include <math.h> //for std::round
-
+#include <chrono>
 
 
 
@@ -123,7 +123,7 @@ torch::Tensor gen_ascii_tensor(std::shared_ptr<std::vector<std::string>> inputSt
 {
    int stringLen = inputStrings->at(0).length();
    std::vector<float> output(inputStrings->size() * stringLen, 0.0);
-   for (int i = 0; i < inputStrings->size(); i++)
+   for (unsigned long i = 0; i < inputStrings->size(); i++)
    {
       auto randString = inputStrings->at(i);
       for (int j = 0; j < stringLen; j++)
@@ -157,7 +157,7 @@ std::vector<std::vector<unsigned int>> gen_ascii_string_array(int length, size_t
    return output;
 }
 
-std::vector<unsigned int> gen_random_indices(std::vector<std::string> &input_vec, int desired_num_eles)
+std::vector<unsigned int> gen_random_indices(std::vector<std::string> &input_vec)
 {
    std::vector<unsigned int> indices(input_vec.size());
    std::iota(indices.begin(), indices.end(), 0);
@@ -169,11 +169,27 @@ std::vector<unsigned int> gen_random_indices(std::vector<std::string> &input_vec
    // use V[indices[0]], V[indices[1]], ..., V[indices[M-1]]
 }
 
+template<typename K>
+std::vector<unsigned int> gen_random_subset_indices(std::vector<K> &input_vec, unsigned int desired_num_eles) {
+      std::vector<unsigned int> indices(input_vec.size());
+      std::iota(indices.begin(), indices.end(), 0);
+      unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count(); // time seed
+      auto rng = std::default_random_engine{seed1};
+      std::shuffle(indices.begin(), indices.end(), rng);
+      indices.resize(desired_num_eles);
+      return indices;
 
-std::vector<std::string> select_random_vector_subset(std::vector<std::string> &input_vec, int desired_num_eles)
+      // for (int i = 0; i < desired_num_eles; i++){
+      //    output.push_back(input_vec[indices[i]]);
+      // }
+
+}
+
+template<typename K>
+std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desired_num_eles)
 {
-   std::vector<std::string> output(input_vec.size());
-   auto indices = gen_random_indices(input_vec, desired_num_eles);
+   std::vector<K> output(input_vec.size());
+   auto indices = gen_random_subset_indices(input_vec, desired_num_eles);
    for (auto i : indices)
    {
       output.push_back(input_vec[i]);
@@ -182,16 +198,36 @@ std::vector<std::string> select_random_vector_subset(std::vector<std::string> &i
    return output;
 }
 
-torch::Tensor select_random_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
+
+
+torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
 {
    std::vector<int> indices(desired_num_eles);
    auto rng = std::default_random_engine{};
-   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin());
+   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin()); // TODO this is not yet a random subset of indices. Need togenerate the indices and shuffle before copying
+   // can we index out of order without for looping?
    std::shuffle(indices.begin(), indices.end(), rng);
 
    auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
 
    torch::Tensor output = data.index_select(0, index_tensor ); // use narrow copy if inplace causes problems
+   // output = output.narrow(0, 0, desired_num_eles -1);
+   // std::cout << output << std::endl; 
+   //TODO CHECK THIS
+   return output;
+}
+
+torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
+{
+   std::vector<int> indices(desired_num_eles);
+   std::copy_n(index_vec.begin(), desired_num_eles, indices.begin()); // TODO this is not yet a random subset of indices. Need togenerate the indices and shuffle before copying
+
+   auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
+
+   torch::Tensor output = data.index_select(0, index_tensor ); // use narrow copy if inplace causes problems
+
+   // output = output.narrow(0, 0, desired_num_eles -1);
+   // std::cout << output << std::endl; 
    //TODO CHECK THIS
    return output;
 }

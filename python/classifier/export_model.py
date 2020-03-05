@@ -12,6 +12,7 @@ import pickle
 
 
 def load_lstm(args, model_path):
+    #TODO load the original model and test what the outputs are on this side. they should match. 
     model = embedding_lstm.LSTMBasicX(args, 2, model_path)
     model.eval()
     return model
@@ -74,10 +75,11 @@ def export_lstm(args, export_dataset=True):
         tensor_list, label_list = extract_data(validation_set)
         tensor_list, label_list = extract_data(test_set, tensor_list=tensor_list, label_list=label_list)
         tensors = torch.stack(tensor_list, dim=0)
-        labels = torch.IntTensor(label_list)
+        labels = torch.FloatTensor(label_list)
 
         print("final exported tensor dims", tensors.shape)
         print("final exported label dims", labels.shape)
+        print("with positive labels", np.sum(labels.detach().numpy()))
 
 
         export_values = {

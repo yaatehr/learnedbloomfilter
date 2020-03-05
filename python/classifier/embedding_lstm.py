@@ -119,11 +119,14 @@ class LSTMBasicX(nn.Module):
     def forward(self, sequence):
         # print('Sequence shape:', sequence.shape)
         sequence = sequence.view(len(sequence), 1, -1)
-        print("flattened sequence shape: ", sequence.shape)
+        # print("flattened sequence shape: ", sequence.shape)
         lstm_out, _hidden = self.lstm(
              sequence
         ) #Assuming that we can't update the hidden state as traces LSTM no longer takes in a hidden param
         #TODO verify this assumption
         out_space = self.hidden2out(lstm_out[:, -1])
+        # print("out_space: ", out_space)
         out_scores = F.log_softmax(out_space, dim=1)
+        # print("out scores ", out_scores)
+
         return out_scores

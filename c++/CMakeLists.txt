@@ -27,7 +27,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters  
   )
 # add_subdirectory(Filters)
-add_executable(learned_b rand_learned_benchmark.cpp)
+# add_executable(learned_b rand_learned_benchmark.cpp)
+add_executable(learned_b url_learned_benchmark.cpp)
 # add_executable(learned_b Filters/learned_bloom.cpp)
 # add_executable(learned_b parse_example.cpp)
 
