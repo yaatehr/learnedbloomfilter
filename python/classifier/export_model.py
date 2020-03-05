@@ -13,14 +13,17 @@ import pickle
 
 def load_lstm(args, model_path):
     #TODO load the original model and test what the outputs are on this side. they should match. 
-    model = embedding_lstm.LSTMBasicX(args, 2, model_path)
-    model.eval()
-    return model
+    export_model = embedding_lstm.LSTMBasicX(args, 2, model_path)
+    base_model = embedding_lstm.LSTMBasic(args, 2)
+    export_model.eval()
+    base_model.load_state_dict(torch.load(model_path))
+    base_model.eval()
+    return export_model, base_model
 
 def export_lstm(args, export_dataset=True):
     model_path = os.path.join(args.root, 'python/modelsaves/second_run_train_test_val_split.pth')
     model_save_name = "traced_lstm_non_homogenized"
-    model = load_lstm(args, model_path)
+    model, base_model = load_lstm(args, model_path)
     print("model loaded")
     dataset = data_loader.EncodedStringLabelDataset(args, init_tuple=(["test"]*2000, ["label"]*2000, [0]*2000, None))
     export_params = {
@@ -72,6 +75,29 @@ def export_lstm(args, export_dataset=True):
             
             return tensor_list, label_list
 
+        validation_generator = DataLoader(validation_set, **export_params)
+        test_generator = DataLoader(test_set, **export_params)
+
+        def test_model(model, dataset_generator):
+            total_errors = 0
+            num_inset_predicted =0
+            for i, (features, labels) in enumerate(dataset_generator):
+                predictions = model(features)
+                y_true = labels.cpu().numpy().tolist()
+                y_pred = torch.max(predictions, 1)[1].cpu().numpy().tolist()
+                # print()
+                num_correct = np.sum(np.equal(y_true, y_pred))
+                num_inset_predicted += np.sum(y_pred)
+                num_incorrect = len(y_true) - num_correct
+                total_errors += num_incorrect
+                #TODO fix this so that we don't need to use the argmax but that wwe actually predict a onehot or something that works iwth torch max
+            print("predicted %d positive labels" % num_inset_predicted)
+            return total_errors
+
+        total_errors = test_model(base_model, validation_generator) 
+        total_errors += test_model(base_model, test_generator)
+        print("base model had %d errors total" % total_errors)
+
         tensor_list, label_list = extract_data(validation_set)
         tensor_list, label_list = extract_data(test_set, tensor_list=tensor_list, label_list=label_list)
         tensors = torch.stack(tensor_list, dim=0)
@@ -80,7 +106,6 @@ def export_lstm(args, export_dataset=True):
         print("final exported tensor dims", tensors.shape)
         print("final exported label dims", labels.shape)
         print("with positive labels", np.sum(labels.detach().numpy()))
-
 
         export_values = {
             'data': tensors,

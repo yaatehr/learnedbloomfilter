@@ -87,7 +87,7 @@ def train(
             predictions = torch.zeros(pred_shape)
 
         y_true += labels.cpu().numpy().tolist()
-        y_pred += torch.max(predictions, 1)[1].cpu().numpy().tolist()
+        y_pred += torch.argmax(predictions, 1).cpu().numpy().tolist()
 
         loss = criterion(predictions, labels)
         if not args.dry_run:
