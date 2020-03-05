@@ -185,7 +185,6 @@ std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desire
    {
       output.push_back(input_vec[i]);
    }
-
    return output;
 }
 
@@ -193,24 +192,15 @@ std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desire
 torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
 {
    std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
-   auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
-
-   torch::Tensor output = data.index_select(0, index_tensor ); // use narrow copy if inplace causes problems
-   // output = output.narrow(0, 0, desired_num_eles -1);
-   // std::cout << output << std::endl; 
-   //TODO CHECK THIS
-   return output;
+   return select_tensor_subset(data, indices, desired_num_eles);
 }
 
 torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
 {
    std::vector<int> indices(desired_num_eles);
    std::copy_n(index_vec.begin(), desired_num_eles, indices.begin());
-   auto index_tensor = torch::from_blob(indices.data(), {desired_num_eles}).toType(torch::kInt64);
-
-   torch::Tensor output = data.index_select(0, index_tensor );
-   // std::cout << output << std::endl; 
-   //TODO CHECK THIS
+   auto index_tensor = torch::tensor(indices).toType(torch::kInt64);
+   torch::Tensor output = data.index(index_tensor); 
    return output;
 }
 

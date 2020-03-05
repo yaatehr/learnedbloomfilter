@@ -266,11 +266,9 @@ public:
       #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
 #endif
-      // auto data_accessor = X->accessor<float, 3>();
       auto label_accessor = Y->accessor<float, 1>();
       int counter = 0;
-      // std::cout << *Y << std::endl;
-      unsigned int num_incorrect = 0;
+      unsigned int num_correct = 0;
       int num_batches = label_accessor.size(0) /100;
       std::cout << " iterating over " << num_batches << " batches of data - " << label_accessor.size(0)<< std::endl;
       int num_positive_samples = 0;
@@ -281,26 +279,23 @@ public:
             std::iota(indices.begin(), indices.end(), i*100);
             auto tensor = select_tensor_subset(*X, indices, 100);
             auto predictions = predict_batch(tensor);
-            for(unsigned long j = 0; j < predictions.size(); j++) {
+            for(unsigned long j = 0; j < predictions.size(); j++) { //TODO clean up this code
                if (predictions[j]) {
                   num_positive_predictions++;
                }
-               // std::cout << label_accessor[i*100 + counter];
                bool is_positive_label = label_accessor[i*100 + j] >= .5;
-               // std::cout << is_positive_label;
                if(is_positive_label) {
                   num_positive_samples++;
                }
-               // int int_prediction = prediction ? 1 :0;
-               if (predictions[j] != is_positive_label) {
-                  num_incorrect ++;
+               if (predictions[j] == is_positive_label) {
+                  num_correct ++;
                }
                counter++;
             }
       }
 
       #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter error rate was: "  << num_incorrect / label_accessor.size(0) << std::endl;
+      std::cout << "Learned bloom filter classifier accuracy was: "  << (float) num_correct / (float) label_accessor.size(0) << std::endl;
       std::cout << "with: "  << num_positive_samples  << " positive samples" << std::endl;
       std::cout << "and: "  << num_positive_predictions << " positive predictions" << std::endl;
       std::cout << "and: "  << counter << " iterations" << std::endl;
