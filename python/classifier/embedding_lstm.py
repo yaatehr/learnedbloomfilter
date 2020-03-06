@@ -87,7 +87,7 @@ class LSTMBasicX(nn.Module):
         )
 
         self.hidden = self.init_hidden()
-        self.projected_input_shape = (args.batch_size, 1, args.max_length*args.embedding_size)
+        self.projected_input_shape = (1, 1, args.max_length*args.embedding_size)
 
         self.lstm = nn.LSTM(
             self.embedding_size,

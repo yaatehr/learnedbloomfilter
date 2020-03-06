@@ -21,7 +21,15 @@
 #include <math.h> //for std::round
 #include <chrono>
 
+template<typename T>
+std::vector<T> slice(std::vector<T> const &v, int m, int n)
+{
+    auto first = v.cbegin() + m;
+    auto last = v.cbegin() + n + 1;
 
+    std::vector<T> vec(first, last);
+    return vec;
+}
 
 std::string random_string(size_t length)
 {
@@ -179,20 +187,13 @@ std::vector<unsigned int> gen_random_indices(std::vector<K> &input_vec, unsigned
 template<typename K>
 std::vector<K> select_random_vector_subset(std::vector<K> &input_vec, int desired_num_eles)
 {
-   std::vector<K> output;
+   std::vector<K> output = std::vector<K>();
    auto indices = gen_random_indices(input_vec, desired_num_eles);
    for (auto i : indices)
    {
       output.push_back(input_vec[i]);
    }
    return output;
-}
-
-
-torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
-{
-   std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
-   return select_tensor_subset(data, indices, desired_num_eles);
 }
 
 torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
@@ -204,9 +205,14 @@ torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_v
    return output;
 }
 
+torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
+{
+   std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
+   return select_tensor_subset(data, indices, desired_num_eles);
+}
+
 // Read in the csv file and return keys and labels as vector of tuples.
 std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::string& location) {
-
     std::fstream in(location, std::ios::in);
     std::string line;
     std::string key;
@@ -221,9 +227,47 @@ std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::str
                                     // converts string to integer
         csv.push_back(std::make_tuple( key, stoi(label)));
     }
-
     return csv;
 }
+
+std::vector<std::string> load_dataset(std::string location) {
+   std::string test_set_location = location + "/test_set.txt";
+   std::string validation_set_location = location + "/validation_set.txt";
+
+    std::fstream in(validation_set_location, std::ios::in);
+    std::string line;
+    std::string key;
+    std::string label;
+   std::vector<std::string> keys;
+   std::vector<int> labels; // TODO validate labels and return tup or pointers for these?
+   std::cout << "attempting to load from " + validation_set_location << std::endl;
+
+    while (getline(in, line))
+    {
+        std::stringstream s(line);
+        s >> label >> key;
+                                    // converts string to integer
+      labels.push_back(stoi(label));
+      keys.push_back(key);
+    }
+    in.close();
+   std::cout << "attempting to load from " << test_set_location << std::endl;
+
+
+   std::fstream in2(test_set_location, std::ios::in);
+       while (getline(in2, line))
+    {
+        std::stringstream s(line);
+        s >> label >> key;
+                                    // converts string to integer
+      labels.push_back(stoi(label));
+      keys.push_back(key);
+    }
+
+    return keys;
+}
+
+
 
 
 

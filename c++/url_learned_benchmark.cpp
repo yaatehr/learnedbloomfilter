@@ -1,6 +1,7 @@
 #define TORCH_INPUT_LEN 124
 #define INSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
 #define OUTSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
+#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
 // #ifndef USER_DEBUG_STATEMENTS
 // #define USER_DEBUG_STATEMENTS
 // #endif
@@ -24,22 +25,23 @@ public:
    LearnedBloomFilter *filter;
    std::map<std::string, std::vector<int>> valid_index_map;
    std::map<std::string, std::vector<int>> invalid_index_map;
-   std::string *str_list;
-   std::string *invalid_str_list;
-   std::vector<std::string> parsed_phishing_urls;
-   std::vector<std::string> parsed_good_urls;
+   std::vector<std::string> key_strings;
 
    MyFixtureLearned()
    {
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "fixture init";
-      std::cout << "max num val int: " << std::numeric_limits<int>::max();
+      std::cout << "max num val int: " << std::numeric_limits<int>::max() << std::endl;
 
 #endif
 
       MyFixtureLearned::valid_index_map = {};
       MyFixtureLearned::invalid_index_map = {};
-
+      MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
+      
+      #ifdef USER_DEBUG_STATEMENTS
+      std::cout << "loaded " << key_strings.size() << " urls from dataset" << std::endl;
+      #endif
    };
 
    void SetUp(const ::benchmark::State &state)
@@ -51,8 +53,8 @@ public:
       std::string key = "k" + std::to_string(state.range(2)) + std::to_string(TORCH_INPUT_LEN);
       if (valid_index_map.count(key) == 0)
       {
-         auto valid_index_subset = select_random_vector_subset(MyFixtureLearned::filter->validIndices, state.range(2));
-         auto invalid_index_subset = select_random_vector_subset(MyFixtureLearned::filter->invalidIndices, state.range(2));
+         std::vector<int> valid_index_subset = select_random_vector_subset(MyFixtureLearned::filter->validIndices, state.range(2));
+         std::vector<int> invalid_index_subset = select_random_vector_subset(MyFixtureLearned::filter->invalidIndices, state.range(2));
          valid_index_map.emplace(key, std::move(valid_index_subset));
          invalid_index_map.emplace(key, std::move(invalid_index_subset));
       }
@@ -89,42 +91,50 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
       // st.counters["fpr"] = 0;
       // st.counters["num_hashes"] = 0;
       // st.counters["table_size"] = 0;
-      std::string key = "k" + std::to_string(st.range(2)) + std::to_string(st.range(3));
+      std::string key = "k" + std::to_string(st.range(2)) + std::to_string(TORCH_INPUT_LEN);
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "getting tensor from map" << std::endl;
+      std::cout << "getting tensor indices from map" << std::endl;
+      // std::cout << MyFixtureLearned::valid_index_map << std::endl;
 #endif
-      std::vector<int> valid_tensor_indices = MyFixtureLearned::valid_index_map[key];
-      std::vector<int> invalid_tensor_indices = MyFixtureLearned::invalid_index_map[key];
+      auto valid_tensor_indices = MyFixtureLearned::valid_index_map[key];
+      auto invalid_tensor_indices = MyFixtureLearned::invalid_index_map[key];
+
 
 
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "getting accessors from tensor" << std::endl;
+      std::cout << "inserting valid indices into compound model" << std::endl;
 #endif
 
+// iterate through valid tesnroe and insert anythign predicted false
 
-      auto tensor_accessor = MyFixtureLearned::filter->X->accessor<float, 3>();
-      #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "data accessor created of size: " << tensor_accessor.size(0) << std::endl;
-#endif
-
-// iterate through tensor and call one at a time
-
-         for (auto i : valid_tensor_indices)
-         {
-            torch::Tensor valid_tensor = torch::from_blob(tensor_accessor[i].data(), {124, 32});
-            MyFixtureLearned::filter->predict(valid_tensor);
-         }
-
-//       for (auto inp : valid_inputs)
-//       {
-// // auto inp = valid_inputs->at(i);
-// #ifdef USER_DEBUG_STATEMENTS
-//          std::cout << "inputing element: " << inp << std::endl;
-// #endif
-//          // std::cout << MyFixtureLearned::filter->query("stringoflengthasdfgh") << std::endl;
-//          MyFixtureLearned::filter->insert(inp);
-//       }
+      for( int i=0; i < numItems ; i++) {
+            std::vector<int> index_vec; 
+            index_vec.push_back(valid_tensor_indices[i]);
+            auto tensor = select_tensor_subset(*MyFixtureLearned::filter->X, index_vec, 1);
+            auto prediction = filter->predict(tensor);
+            if(!prediction) {
+                  filter->filter->insert(key_strings[valid_tensor_indices[i]]);
+            }
+      }
       st.ResumeTiming();
+
+
+      for( int i=0; i < numItems ; i++) {
+            std::vector<int> index_vec; 
+            index_vec.push_back(invalid_tensor_indices[i]);
+            auto tensor = select_tensor_subset(*MyFixtureLearned::filter->X, index_vec, 1);
+            auto prediction = filter->predict(tensor);
+            // any true predictions for the outset are incorrect
+            if(prediction ) {// query strings and incrment num false positives
+                  if(filter->filter->contains(key_strings[invalid_tensor_indices[i]])) {
+                  // std::cout << "FALSE POSITIVE FOUND  " << key_strings[invalid_tensor_indices[i]] << std::endl;
+                  numFalsePos++;
+                  }
+            }
+      }
+      // for( i=0; i < numItems; i++) {
+      //       std::vector<int> index
+      // }
 
       // numFalsePos = MyFixtureLearned::filter->batch_query_count(*invalid_inputs);
 
@@ -132,9 +142,9 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
       double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
       double table_size = (double)MyFixtureLearned::filter->filter->size();
 
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
-#endif
+// #ifdef USER_DEBUG_STATEMENTS
+      // std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
+// #endif
       st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}});
 
       // st.counters["fpr"] = fpr;
@@ -214,7 +224,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
 /* BarTest is NOT registered */
 // range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
-BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});
+BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringInsertion)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterIntQuery)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterIntInsertion)->Ranges({{2, 2 << 10}, {1000, 1000000}, {8, 8 << 10}, {10, 100}});

@@ -1,8 +1,8 @@
 // #pragma once
 
-#ifndef USER_DEBUG_STATEMENTS
-#define USER_DEBUG_STATEMENTS
-#endif
+// #ifndef USER_DEBUG_STATEMENTS
+// #define USER_DEBUG_STATEMENTS
+// #endif
 
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
@@ -45,7 +45,7 @@ public:
       try
       {
 #ifdef USER_DEBUG_STATEMENTS
-         std::cout << "ATTEMPTING TO BUILD NET" << std::endl;
+         std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
          // Deserialize the ScriptModule from a file using torch::jit::load().
          module = std::make_shared<torch::jit::script::Module>(torch::jit::load(MODEL_PATH));
@@ -54,19 +54,11 @@ public:
          // // Load values by name
          torch::Tensor a = container.hasattr("data") ? container.attr("data").toTensor() : torch::Tensor();
          torch::Tensor b = container.hasattr("labels") ? container.attr("labels").toTensor() : torch::Tensor();
-
-
-
-         std::cout << "attempting to make an accessor for data"<< std::endl;
-         // std::cout << a.accessor<float, 3>()[0][0][0] << std::endl;
-         std::cout << a.accessor<float, 3>()[0][0][0] << std::endl;
          torch::TensorAccessor<float, 1> accessor = b.accessor<float, 1>();
 
-         std::cout << "pre shared pointers init" << std::endl;
          X = std::make_shared<torch::Tensor>(a);
          Y = std::make_shared<torch::Tensor>(b);
 
-         std::cout << "shared pointers init" << std::endl;
          int counter = 0;
          for (int i = 0; i < accessor.size(0); i++)
          {
@@ -81,7 +73,9 @@ public:
             }
             counter++;
          }
+         #ifdef USER_DEBUG_STATEMENTS
          std::cout << "loaded " << validIndices.size() << " positive samples and " << invalidIndices.size() << " negative samples" << std::endl;
+         #endif
          //   std::cout << tensor.slice(/*dim=*/1, /*start=*/0, /*end=*/5) << '\n';
       }
       catch (const c10::Error &e)
@@ -130,8 +124,8 @@ public:
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
       torch::Tensor out_tensor = module->forward(inputs).toTensor();
-      float prediction = std::round(out_tensor.accessor<float, 2>()[0][0]);
-      return prediction > 0.5;
+      auto accessor = out_tensor.accessor<float, 2>();
+      return accessor[0][0] < accessor[0][1];
    }
 
    std::vector<bool> predict_batch(torch::Tensor input)
@@ -147,10 +141,6 @@ public:
          bool isMalicious = accessor[i][0] < accessor[i][1]; // if label 0 is smaller than label 1, then 0 is less likely
          outputs.push_back(isMalicious);
       }
-
-
-      // std::cout << outputs.size() << std::endl;
-
       return outputs;
    }
 
@@ -266,24 +256,23 @@ public:
       #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
 #endif
-      auto label_accessor = Y->accessor<float, 1>();
+      auto label_accessor = Y->accessor<float, 1>(); //TODO this can be the entire dataset instead of batches
       int counter = 0;
       unsigned int num_correct = 0;
-      int num_batches = label_accessor.size(0) /100;
-      std::cout << " iterating over " << num_batches << " batches of data - " << label_accessor.size(0)<< std::endl;
+      // int num_samples = label_accessor.size(0);
       int num_positive_samples = 0;
       int num_positive_predictions = 0;
-      for( int i=0; i < num_batches ; i++) {//TODO make this method more robust and complete the last (variable) sized batch
+      // for( int i=0; i < num_batches ; i++) {//TODO make this method more robust and complete the last (variable) sized batch
             // torch::Tensor tensor = torch::from_blob(data_accessor[i].data(), {3968, 64});
-            std::vector<int> indices(100);
-            std::iota(indices.begin(), indices.end(), i*100);
-            auto tensor = select_tensor_subset(*X, indices, 100);
-            auto predictions = predict_batch(tensor);
+            // std::vector<int> indices(num_samples);
+            // std::iota(indices.begin(), indices.end(), 0);
+            // auto tensor = select_tensor_subset(*X, indices, num_samples);
+            auto predictions = predict_batch(*X);
             for(unsigned long j = 0; j < predictions.size(); j++) { //TODO clean up this code
                if (predictions[j]) {
                   num_positive_predictions++;
                }
-               bool is_positive_label = label_accessor[i*100 + j] >= .5;
+               bool is_positive_label = label_accessor[j] >= .5;
                if(is_positive_label) {
                   num_positive_samples++;
                }
@@ -292,7 +281,7 @@ public:
                }
                counter++;
             }
-      }
+      // }
 
       #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter classifier accuracy was: "  << (float) num_correct / (float) label_accessor.size(0) << std::endl;
