@@ -73,9 +73,9 @@ public:
             }
             counter++;
          }
-         #ifdef USER_DEBUG_STATEMENTS
+#ifdef USER_DEBUG_STATEMENTS
          std::cout << "loaded " << validIndices.size() << " positive samples and " << invalidIndices.size() << " negative samples" << std::endl;
-         #endif
+#endif
          //   std::cout << tensor.slice(/*dim=*/1, /*start=*/0, /*end=*/5) << '\n';
       }
       catch (const c10::Error &e)
@@ -84,9 +84,7 @@ public:
          std::cerr << e.what();
       }
 
-
       evaluate_classifier();
-
 
       bloom_parameters parameters;
       parameters.random_seed = 0xA5A5A5A5;
@@ -118,7 +116,7 @@ public:
       float prediction = std::round(out_tensor.accessor<float, 2>()[0][0]);
       return prediction > 0.5;
    }
-   
+
    bool predict(torch::Tensor input) //TODO deprecate
    {
       std::vector<torch::jit::IValue> inputs;
@@ -137,7 +135,8 @@ public:
       auto accessor = out_tensor.accessor<float, 2>();
       // std::cout << "first prediction vector: " << out_tensor << std::endl;
       std::vector<bool> outputs;
-      for (int i = 0 ; i < accessor.size(0); i++) {
+      for (int i = 0; i < accessor.size(0); i++)
+      {
          bool isMalicious = accessor[i][0] < accessor[i][1]; // if label 0 is smaller than label 1, then 0 is less likely
          outputs.push_back(isMalicious);
       }
@@ -250,88 +249,80 @@ public:
       return sum_false_pos;
    }
 
+   void evaluate_classifier()
+   {
 
-   void evaluate_classifier() {
-
-      #ifdef USER_DEBUG_STATEMENTS
+#ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
 #endif
-      auto label_accessor = Y->accessor<float, 1>(); //TODO this can be the entire dataset instead of batches
-      int counter = 0;
+      auto label_accessor = Y->accessor<float, 1>();
       unsigned int num_correct = 0;
-      // int num_samples = label_accessor.size(0);
       int num_positive_samples = 0;
       int num_positive_predictions = 0;
-      // for( int i=0; i < num_batches ; i++) {//TODO make this method more robust and complete the last (variable) sized batch
-            // torch::Tensor tensor = torch::from_blob(data_accessor[i].data(), {3968, 64});
-            // std::vector<int> indices(num_samples);
-            // std::iota(indices.begin(), indices.end(), 0);
-            // auto tensor = select_tensor_subset(*X, indices, num_samples);
-            auto predictions = predict_batch(*X);
-            for(unsigned long j = 0; j < predictions.size(); j++) { //TODO clean up this code
-               if (predictions[j]) {
-                  num_positive_predictions++;
-               }
-               bool is_positive_label = label_accessor[j] >= .5;
-               if(is_positive_label) {
-                  num_positive_samples++;
-               }
-               if (predictions[j] == is_positive_label) {
-                  num_correct ++;
-               }
-               counter++;
-            }
-      // }
+      auto predictions = predict_batch(*X);
+      for (unsigned long j = 0; j < predictions.size(); j++)
+      {
+         if (predictions[j])
+         {
+            num_positive_predictions++;
+         }
+         bool label = label_accessor[j] >= .5;
+         if (label)
+         {
+            num_positive_samples++;
+         }
+         if (predictions[j] == label)
+         {
+            num_correct++;
+         }
+      }
 
-      #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter classifier accuracy was: "  << (float) num_correct / (float) label_accessor.size(0) << std::endl;
-      std::cout << "with: "  << num_positive_samples  << " positive samples" << std::endl;
-      std::cout << "and: "  << num_positive_predictions << " positive predictions" << std::endl;
-      std::cout << "and: "  << counter << " iterations" << std::endl;
-#endif      
-
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter classifier accuracy was: " << (float)num_correct / (float)label_accessor.size(0) << std::endl;
+      std::cout << "with: " << num_positive_samples << " positive samples" << std::endl;
+      std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
+#endif
    }
 
+   //    /**
+   //     * returns a count of the number of predicted positives from ensemble
+   //     */
+   //    int count_batch_classifier_predictions(std::vector<unsigned int> &indices)
+   //    {
+   // #ifdef USER_DEBUG_STATEMENTS
+   //       std::cout << "Learned bloom filter batch query count" << std::endl;
+   // #endif
 
-//    /**
-//     * returns a count of the number of predicted positives from ensemble
-//     */
-//    int count_batch_classifier_predictions(std::vector<unsigned int> &indices)
-//    {
-// #ifdef USER_DEBUG_STATEMENTS
-//       std::cout << "Learned bloom filter batch query count" << std::endl;
-// #endif
+   //       std::vector<bool> outputs;
+   //       auto accessor = X->accessor<float, 3>();
+   //       for (auto i : indices) {
+   //             torch::Tensor valid_tensor = torch::from_blob(accessor[i].data(), {124, 32});
+   //             outputs.push_back(predict(valid_tensor));
+   //       }
 
-//       std::vector<bool> outputs;
-//       auto accessor = X->accessor<float, 3>();
-//       for (auto i : indices) {
-//             torch::Tensor valid_tensor = torch::from_blob(accessor[i].data(), {124, 32});
-//             outputs.push_back(predict(valid_tensor));
-//       }
-
-//       int index = 0;
-//       int sum_false_pos = 0;
-//       for (auto s : outputs)
-//       {
-//          if (s)
-//          {
-//             sum_false_pos++;
-//          }
-//          else
-//          {
-//             auto update = filter->contains(input_strings.at(index));
-//             if (update)
-//             {
-//                sum_false_pos++;
-//             }
-//          }
-//          index++;
-//       }
-// #ifdef USER_DEBUG_STATEMENTS
-//       std::cout << "Learned bloom filter batch query count returning..." << std::endl;
-// #endif
-//       return sum_false_pos;
-//    }
+   //       int index = 0;
+   //       int sum_false_pos = 0;
+   //       for (auto s : outputs)
+   //       {
+   //          if (s)
+   //          {
+   //             sum_false_pos++;
+   //          }
+   //          else
+   //          {
+   //             auto update = filter->contains(input_strings.at(index));
+   //             if (update)
+   //             {
+   //                sum_false_pos++;
+   //             }
+   //          }
+   //          index++;
+   //       }
+   // #ifdef USER_DEBUG_STATEMENTS
+   //       std::cout << "Learned bloom filter batch query count returning..." << std::endl;
+   // #endif
+   //       return sum_false_pos;
+   //    }
 
    void insert(std::string input)
    {
@@ -360,6 +351,4 @@ public:
    // {
    //    return filter->hash_count();
    // }
-
-
 };
