@@ -98,37 +98,14 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "inserting valid indices into compound model" << std::endl;
 #endif
             // insert all valid tensors an strings
-            for (int i = 0; i < numItems; i++)
-            {
-                  std::vector<int> index_vec;
-                  index_vec.push_back(valid_tensor_indices[i]);
-                  auto tensor = select_tensor_subset(*MyFixtureLearned::filter->X, index_vec, 1);
-                  auto prediction = filter->predict(tensor);
-                  if (!prediction)
-                  {
-                        filter->filter->insert(key_strings[valid_tensor_indices[i]]);
-                  }
-            }
+            MyFixtureLearned::filter->insert(valid_tensor_indices);
+
             st.ResumeTiming();
             // query all invalid tensors and strings
-            for (int i = 0; i < numItems; i++)
-            {
-                  std::vector<int> index_vec;
-                  index_vec.push_back(invalid_tensor_indices[i]);
-                  auto tensor = select_tensor_subset(*MyFixtureLearned::filter->X, index_vec, 1);
-                  auto prediction = filter->predict(tensor);
-                  // any true predictions for the outset are incorrect
-                  if (prediction)
-                  { // query strings and incrment num false positives
-                        if (filter->filter->contains(key_strings[invalid_tensor_indices[i]]))
-                        {
-                              // std::cout << "FALSE POSITIVE FOUND  " << key_strings[invalid_tensor_indices[i]] << std::endl;
-                              numFalsePos++;
-                        }
-                  }
-            }
 
-            double fpr = numFalsePos * 100 / (double)(numItems);
+            numFalsePos = MyFixtureLearned::filter->batch_query_count(invalid_tensor_indices, false);
+
+            double fpr = (double) numFalsePos * 100 / (double)(numItems);
             double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
             double table_size = (double)MyFixtureLearned::filter->filter->size();
 
@@ -147,7 +124,8 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
 /* BarTest is NOT registered */
 // range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
-BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
+// BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
+BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 4}, {50, 1000000}, {8, 8 << 10}});
 
 
 BENCHMARK_MAIN();

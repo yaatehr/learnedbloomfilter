@@ -13,6 +13,9 @@
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
 #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized_container.pt"
 #endif
+#ifndef DATASET_PATH
+#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
+#endif
 
 #include <iostream>
 #include <string>
@@ -39,6 +42,8 @@ public:
    std::shared_ptr<at::Tensor> Y;
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
+   std::vector<std::string> data_strings;
+
 
    LearnedBloomFilter(int projected_ele_count, float false_pos_probability)
    {
@@ -84,6 +89,7 @@ public:
          std::cerr << e.what();
       }
 
+      data_strings = load_dataset(DATASET_PATH);
       evaluate_classifier();
 
       bloom_parameters parameters;
@@ -157,6 +163,53 @@ public:
 #endif
       return filter->contains(input);
    }
+
+
+   bool query(int index){ 
+      std::vector<int> index_vec = {index};
+      auto tensor = select_tensor_subset(*X, index_vec, 1);
+      auto prediction = predict(tensor);
+      if(prediction){
+         return true;
+      } else {
+         return filter->contains(data_strings[index]);
+      }
+   }
+   std::vector<bool> query(std::vector<int> indices){ 
+      std::vector<bool> outputs;
+      for (auto i : indices) {
+         outputs.push_back(query(i));
+      }
+      return outputs;
+   }
+
+
+   void insert(int index){  // todo is this void?
+      std::vector<int> index_vec = {index};
+      auto tensor = select_tensor_subset(*X, index_vec, 1);
+      auto prediction = predict(tensor);
+      if (!prediction)
+      {
+            filter->insert(data_strings[index]);
+      }
+   }
+
+   void insert(std::vector<int> indices){ 
+      for (auto i : indices) {
+         insert(i);
+      }
+   }
+
+
+///////////////////////////////////////////////////?
+///////////////////////////////////////////////////?
+///////////////////////////////////////////////////?
+//       String methods (to move to new class)
+///////////////////////////////////////////////////?
+///////////////////////////////////////////////////?
+
+
+
 
    std::vector<bool> query(std::vector<std::string> &inputs)
    {
@@ -249,6 +302,28 @@ public:
       return sum_false_pos;
    }
 
+   /**
+    * returns a count of the number of predicted positives from ensemble
+    */
+   int batch_query_count(std::vector<int> indices, bool valid_indices)
+   {
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter batch query count" << std::endl;
+#endif
+      int num_false_positives = 0;
+      auto predictions = query(indices);
+      for(auto p : predictions) {
+         if(p ^ valid_indices){
+            num_false_positives++;
+         }
+      }
+
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter batch query count returning..." << std::endl;
+#endif
+      return num_false_positives;
+   }
+
    void evaluate_classifier()
    {
 
@@ -282,47 +357,7 @@ public:
       std::cout << "with: " << num_positive_samples << " positive samples" << std::endl;
       std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
 #endif
-   }
-
-   //    /**
-   //     * returns a count of the number of predicted positives from ensemble
-   //     */
-   //    int count_batch_classifier_predictions(std::vector<unsigned int> &indices)
-   //    {
-   // #ifdef USER_DEBUG_STATEMENTS
-   //       std::cout << "Learned bloom filter batch query count" << std::endl;
-   // #endif
-
-   //       std::vector<bool> outputs;
-   //       auto accessor = X->accessor<float, 3>();
-   //       for (auto i : indices) {
-   //             torch::Tensor valid_tensor = torch::from_blob(accessor[i].data(), {124, 32});
-   //             outputs.push_back(predict(valid_tensor));
-   //       }
-
-   //       int index = 0;
-   //       int sum_false_pos = 0;
-   //       for (auto s : outputs)
-   //       {
-   //          if (s)
-   //          {
-   //             sum_false_pos++;
-   //          }
-   //          else
-   //          {
-   //             auto update = filter->contains(input_strings.at(index));
-   //             if (update)
-   //             {
-   //                sum_false_pos++;
-   //             }
-   //          }
-   //          index++;
-   //       }
-   // #ifdef USER_DEBUG_STATEMENTS
-   //       std::cout << "Learned bloom filter batch query count returning..." << std::endl;
-   // #endif
-   //       return sum_false_pos;
-   //    }
+}
 
    void insert(std::string input)
    {
