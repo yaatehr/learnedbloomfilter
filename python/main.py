@@ -111,8 +111,8 @@ def main_loop(args):
     # query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    # train.run(args)
-    export_model.export_lstm(args)
+    train.run(args)
+    # export_model.export_lstm(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -186,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--stepsize", type=float, default=4)
     parser.add_argument("--patience", type=int, default=3)
     parser.add_argument("--early_stopping", type=int, default=0, choices=[0, 1])
+    parser.add_argument("--weight_decay", type=float, default=0)
     parser.add_argument("--checkpoint", type=int, choices=[0, 1], default=1)
 
     # Rnn params
@@ -203,7 +204,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--dry_run", type=int, default=0, choices=[0,1])
 
-    parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
+    # parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
+    parser.add_argument("--in_set_labels", type=list, default=['porn', 'models', 'education', 'lingerie'])
     parser.add_argument("--drop_out_set", type=int, default=1, choices=[0,1])             #TODO Deprecate this hack?
     parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])
     parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])

@@ -437,10 +437,10 @@ def run(args):
             )
         else:
             optimizer = torch.optim.SGD(
-                model.parameters(), lr=args.learning_rate, momentum=0.9
+                model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=args.weight_decay
             )
     elif args.optimizer == "adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     best_f1 = 0
     best_epoch = 0
