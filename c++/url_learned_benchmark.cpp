@@ -26,6 +26,11 @@ public:
       std::map<std::string, std::vector<int>> valid_index_map;
       std::map<std::string, std::vector<int>> invalid_index_map;
       std::vector<std::string> key_strings;
+      std::shared_ptr<torch::Tensor> data;
+      std::shared_ptr<torch::Tensor> labels;
+      std::vector<int> validIndices;
+      std::vector<int> invalidIndices;
+      std::shared_ptr<torch::jit::script::Module> classifier;
 
       MyFixtureLearned()
       {
@@ -37,6 +42,10 @@ public:
             MyFixtureLearned::valid_index_map = {};
             MyFixtureLearned::invalid_index_map = {};
             MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
+   
+            classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
+            std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH);
+
 
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "loaded " << key_strings.size() << " urls from dataset" << std::endl;
@@ -48,7 +57,7 @@ public:
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture setup entered";
 #endif
-            filter = new LearnedBloomFilter(state.range(1), state.range(0));
+            filter = new LearnedBloomFilter(state.range(1), state.range(0), classifier, data, labels, validIndices, invalidIndices, key_strings);
             std::string key = "k" + std::to_string(state.range(2)) + std::to_string(TORCH_INPUT_LEN);
             if (valid_index_map.count(key) == 0)
             {
@@ -125,7 +134,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 /* BarTest is NOT registered */
 // range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
-BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 4}, {50, 1000000}, {8, 8 << 10}});
+BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {4, 60000}, {8, 29318}});
 
 
 BENCHMARK_MAIN();

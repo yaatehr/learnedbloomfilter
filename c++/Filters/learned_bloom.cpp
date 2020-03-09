@@ -37,34 +37,37 @@ class LearnedBloomFilter
 {
 public:
    bloom_filter *filter;
-   std::shared_ptr<torch::jit::script::Module> module;
+   std::shared_ptr<torch::jit::script::Module> classifier;
    std::shared_ptr<at::Tensor> X;
    std::shared_ptr<at::Tensor> Y;
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
    std::vector<std::string> data_strings;
 
-
-   LearnedBloomFilter(int projected_ele_count, float false_pos_probability)
-   {
+   static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
+                     std::shared_ptr<torch::Tensor> /*labels*/,
+                     std::vector<int> /*validIndices*/,
+                     std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path) {
       try
       {
-#ifdef USER_DEBUG_STATEMENTS
-         std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
-#endif
-         // Deserialize the ScriptModule from a file using torch::jit::load().
-         module = std::make_shared<torch::jit::script::Module>(torch::jit::load(MODEL_PATH));
-         torch::jit::script::Module container = torch::jit::load(DATA_PATH);
+          torch::jit::script::Module container = torch::jit::load(DATA_PATH);
 
-         // // Load values by name
-         torch::Tensor a = container.hasattr("data") ? container.attr("data").toTensor() : torch::Tensor();
-         torch::Tensor b = container.hasattr("labels") ? container.attr("labels").toTensor() : torch::Tensor();
+         // check for valid container
+         if(! (container.hasattr("data") && container.hasattr("labels"))) {
+            throw new std::logic_error("data path " + data_path + " points to a container without data and label attributes. Check your pytorch export \n");
+
+         }
+         torch::Tensor a = container.attr("data").toTensor();
+         torch::Tensor b = container.attr("labels").toTensor();
          torch::TensorAccessor<float, 1> accessor = b.accessor<float, 1>();
 
-         X = std::make_shared<torch::Tensor>(a);
-         Y = std::make_shared<torch::Tensor>(b);
+         auto X = std::make_shared<torch::Tensor>(a);
+         auto Y = std::make_shared<torch::Tensor>(b);
 
          int counter = 0;
+         std::vector<int> validIndices;
+         std::vector<int> invalidIndices;
+
          for (int i = 0; i < accessor.size(0); i++)
          {
             auto a1 = accessor[i];
@@ -82,52 +85,81 @@ public:
          std::cout << "loaded " << validIndices.size() << " positive samples and " << invalidIndices.size() << " negative samples" << std::endl;
 #endif
          //   std::cout << tensor.slice(/*dim=*/1, /*start=*/0, /*end=*/5) << '\n';
+
+         return std::make_tuple(X, Y, validIndices, invalidIndices);
       }
       catch (const c10::Error &e)
       {
-         std::cerr << "error loading the data/models\n";
-         std::cerr << e.what();
-      }
+         std::cerr << "error loading the data container \n" << std::endl;
+         std::cerr << e.what() << std::endl;
+         throw e;
+      }     
+   }
 
+   static std::shared_ptr<torch::jit::script::Module> load_classifier(std::string model_path) 
+   {
+      try
+      {
+         return std::make_shared<torch::jit::script::Module>(torch::jit::load(MODEL_PATH));
+      }
+      catch (const c10::Error &e)
+      {
+         std::cerr << "error loading the classifier \n" << std::endl;
+         std::cerr << e.what() << std::endl;
+         throw e;
+      }     
+   }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+//                                  Constructors
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
+   LearnedBloomFilter(int projected_ele_count, float false_pos_probability)
+   {
+
+#ifdef USER_DEBUG_STATEMENTS
+         std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
+#endif
+      classifier = load_classifier(MODEL_PATH);
+      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
       data_strings = load_dataset(DATASET_PATH);
       evaluate_classifier();
-
-      bloom_parameters parameters;
-      parameters.random_seed = 0xA5A5A5A5;
-      parameters.projected_element_count = projected_ele_count;
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "projected_ele_count: " << projected_ele_count << std::endl;
-      std::cout << "false_pos_probability: " << 1.0 / (float)false_pos_probability << std::endl;
-#endif
-
-      parameters.false_positive_probability = 1.0 / (float)false_pos_probability;
-      if (!parameters)
-      {
-         std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;
-         return;
-      }
-      parameters.compute_optimal_parameters();
-      filter = new bloom_filter(parameters);
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter init complete~!" << std::endl;
-#endif
+      init_generic_bloom(projected_ele_count, false_pos_probability);
    }
 
-   bool predict(std::string input)
+   LearnedBloomFilter(int p,
+                      float f, 
+                     std::shared_ptr<torch::jit::script::Module> c,
+                     std::shared_ptr<torch::Tensor> x,
+                     std::shared_ptr<torch::Tensor> y,
+                     std::vector<int> v,
+                     std::vector<int> i,
+                     std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
    {
-      auto t = gen_ascii_tensor(input);
-      std::vector<torch::jit::IValue> inputs;
-      inputs.push_back(t);
-      torch::Tensor out_tensor = module->forward(inputs).toTensor();
-      float prediction = std::round(out_tensor.accessor<float, 2>()[0][0]);
-      return prediction > 0.5;
+
+      evaluate_classifier();
+      init_generic_bloom(p, f);
    }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+//                                  Member Functions
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
+
 
    bool predict(torch::Tensor input) //TODO deprecate
    {
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      torch::Tensor out_tensor = module->forward(inputs).toTensor();
+      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
       auto accessor = out_tensor.accessor<float, 2>();
       return accessor[0][0] < accessor[0][1];
    }
@@ -137,13 +169,13 @@ public:
       // std::cout << input << std::endl;
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      torch::Tensor out_tensor = module->forward(inputs).toTensor();
+      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
       auto accessor = out_tensor.accessor<float, 2>();
       // std::cout << "first prediction vector: " << out_tensor << std::endl;
       std::vector<bool> outputs;
       for (int i = 0; i < accessor.size(0); i++)
       {
-         bool isMalicious = accessor[i][0] < accessor[i][1]; // if label 0 is smaller than label 1, then 0 is less likely
+         bool isMalicious = accessor[i][0] < accessor[i][1]; // if label 0 is smaller than label 1, then 0 is less likely (log softmax outputs)
          outputs.push_back(isMalicious);
       }
       return outputs;
@@ -204,11 +236,19 @@ public:
 ///////////////////////////////////////////////////?
 ///////////////////////////////////////////////////?
 ///////////////////////////////////////////////////?
-//       String methods (to move to new class)
+//       String methods (TODO move to new class)
 ///////////////////////////////////////////////////?
 ///////////////////////////////////////////////////?
 
-
+   bool predict(std::string input)
+   {
+      auto t = gen_ascii_tensor(input);
+      std::vector<torch::jit::IValue> inputs;
+      inputs.push_back(t);
+      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
+      float prediction = std::round(out_tensor.accessor<float, 2>()[0][0]);
+      return prediction > 0.5;
+   }
 
 
    std::vector<bool> query(std::vector<std::string> &inputs)
@@ -237,7 +277,7 @@ public:
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(t);
       std::vector<int> outputs;
-      torch::Tensor out_tensor = module->forward(inputs).toTensor();
+      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
       auto accessor = out_tensor.accessor<float, 2>();
       for (int i = 0; i < accessor.size(0); ++i)
       {
@@ -272,7 +312,7 @@ public:
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(t);
       std::vector<int> outputs;
-      torch::Tensor out_tensor = module->forward(inputs).toTensor();
+      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
       auto accessor = out_tensor.accessor<float, 2>();
       for (int i = 0; i < accessor.size(0); ++i)
       {
@@ -324,6 +364,37 @@ public:
       return num_false_positives;
    }
 
+   void insert(std::string input)
+   {
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter inserting " << std::endl;
+#endif
+      if (predict(input))
+      {
+         return;
+      }
+      filter->insert(input);
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter insert returning " << std::endl;
+#endif
+   }
+
+   void insert(std::vector<std::string> &input_strings)
+   {
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter vector insert NOT IMPLEMENTED" << std::endl;
+#endif
+      //TODO
+   }
+
+   // std::size_t hash_count()
+   // {
+   //    return filter->hash_count();
+   // }
+
+
+private:
+
    void evaluate_classifier()
    {
 
@@ -359,31 +430,26 @@ public:
 #endif
 }
 
-   void insert(std::string input)
-   {
+   void init_generic_bloom(int projected_ele_count, float false_pos_probability) {
+            bloom_parameters parameters;
+      parameters.random_seed = 0xA5A5A5A5;
+      parameters.projected_element_count = projected_ele_count;
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter inserting " << std::endl;
+      std::cout << "projected_ele_count: " << projected_ele_count << std::endl;
+      std::cout << "false_pos_probability: " << 1.0 / (float)false_pos_probability << std::endl;
 #endif
-      if (predict(input))
+
+      parameters.false_positive_probability = 1.0 / (float)false_pos_probability;
+      if (!parameters)
       {
+         std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;
          return;
       }
-      filter->insert(input);
+      parameters.compute_optimal_parameters();
+      filter = new bloom_filter(parameters);
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter insert returning " << std::endl;
+      std::cout << "Learned bloom filter init complete~!" << std::endl;
 #endif
    }
 
-   void insert(std::vector<std::string> &input_strings)
-   {
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter vector insert NOT IMPLEMENTED" << std::endl;
-#endif
-      //TODO
-   }
-
-   // std::size_t hash_count()
-   // {
-   //    return filter->hash_count();
-   // }
 };
