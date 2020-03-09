@@ -21,8 +21,8 @@ def load_lstm(args, model_path):
     return export_model, base_model
 
 def export_lstm(args, export_dataset=True):
-    model_path = os.path.join(args.root, 'python/modelsaves/second_run_train_test_val_split.pth')
-    model_save_name = "traced_lstm_non_homogenized"
+    model_path = os.path.join(args.root, 'python/modelsaves/explicit_lstm_1.pth')
+    model_save_name = "explicit_lstm_1"
     model, base_model = load_lstm(args, model_path)
     print("model loaded")
     dataset = data_loader.EncodedStringLabelDataset(args, init_tuple=(["test"]*2000, ["label"]*2000, [0]*2000, None))

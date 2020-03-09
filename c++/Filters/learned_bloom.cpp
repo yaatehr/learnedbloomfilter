@@ -6,12 +6,13 @@
 
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
+// #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
+#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized_container.pt"
+#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1_container.pt"
 #endif
 #ifndef DATASET_PATH
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
