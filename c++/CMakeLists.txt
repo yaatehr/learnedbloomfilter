@@ -32,9 +32,9 @@ add_executable(learned_b url_learned_benchmark.cpp)
 # add_executable(learned_b Filters/learned_bloom.cpp)
 # add_executable(learned_b parse_example.cpp)
 
-### DEPENDENCIES 
+### DEPENDENCIES  
 
-set(benchmark_ROOT_DIR "" CACHE PATH "/Users/yaatehr/Programs/benchmark")
+set(benchmark_ROOT_DIR "" CACHE PATH "/home/ubuntu/programs/benchmark")
 find_path(benchmark_INCLUDE_DIR "benchmark/benchmark.h"
   PATHS ${benchmark_ROOT_DIR}
   PATH_SUFFIXES include
@@ -54,7 +54,7 @@ if(benchmark_FOUND)
   set(benchmark_INCLUDE_DIRS ${benchmark_INCLUDE_DIR})
 endif()
 mark_as_advanced(benchmark_INCLUDE_DIR benchmark_LIBRARY)
-list(APPEND CMAKE_PREFIX_PATH "/Users/yaatehr/programs/libtorch")
+list(APPEND CMAKE_PREFIX_PATH "/home/ubuntu/programs/libtorch")
 find_package(Torch REQUIRED)
 
 
