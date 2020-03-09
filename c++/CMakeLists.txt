@@ -65,15 +65,15 @@ target_include_directories(learned_b PUBLIC "${benchmark_INCLUDE_DIRS}")
 target_link_libraries(learned_b "${benchmark_LIBRARIES}")
 # set_property(TARGET benchmark PROPERTY CMAKE_BUILD_TYPE Release)
 
+#TORCH
+target_link_libraries(learned_b "${TORCH_LIBRARIES}")
+# target_include_directories(learned_b PUBLIC "${TORCH_LIBRARIES}")
+
 #THREADS
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(learned_b Threads::Threads)
 
-
-#TORCH
-target_link_libraries(learned_b "${TORCH_LIBRARIES}")
-# target_include_directories(learned_b PUBLIC "${TORCH_LIBRARIES}")
 
 #MY DEPS
 # target_link_libraries(learned_b learnedBloom)
@@ -82,7 +82,7 @@ target_link_libraries(learned_b "${TORCH_LIBRARIES}")
 
 
 # SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}")
-set_property(TARGET learned_b PROPERTY CXX_STANDARD 11)
+set_property(TARGET learned_b PROPERTY CXX_STANDARD 14)
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL
     "A flag showing that CMake has configured at least once.")
 
