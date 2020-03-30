@@ -164,6 +164,11 @@ public:
       auto accessor = out_tensor.accessor<float, 2>();
       return accessor[0][0] < accessor[0][1];
    }
+   // Always false prediction override
+   // bool predict(torch::Tensor input)
+   // {
+   //    return false;
+   // }
 
    std::vector<bool> predict_batch(torch::Tensor input)
    {

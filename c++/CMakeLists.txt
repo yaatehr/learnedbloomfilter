@@ -63,7 +63,7 @@ find_package(Torch REQUIRED)
 #BENCHMARK
 target_include_directories(learned_b PUBLIC "${benchmark_INCLUDE_DIRS}")
 target_link_libraries(learned_b "${benchmark_LIBRARIES}")
-# set_property(TARGET benchmark PROPERTY CMAKE_BUILD_TYPE Release)
+# set_property(TARGET benchmark_LIBRARIES PROPERTY CMAKE_BUILD_TYPE Release)
 
 #THREADS
 set(THREADS_PREFER_PTHREAD_FLAG ON)

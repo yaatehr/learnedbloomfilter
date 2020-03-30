@@ -603,7 +603,6 @@ container-nocast.pt
 
 archive/
 input/
-normalized_data/
 python/models/model*
 
 !docs/Dsail-logo-2.png
