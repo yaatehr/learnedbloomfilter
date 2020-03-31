@@ -5,7 +5,7 @@ import json
 import re
 import numpy as np
 from sklearn import metrics
-
+import bloom_calc
 # text-preprocessing
 
 
@@ -153,3 +153,22 @@ def cyclical_lr(stepsize, min_lr=1.7e-3, max_lr=1e-2):
         return max(0, (1 - x)) * scaler(cycle)
 
     return lr_lambda
+
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+def get_bf_size(target_fpr, projected_eles):
+    #NOTE m_calc is a sanity check based on empirically best alpha (.6185)
+    m_calc = math.log(target_fpr)*projected_eles/(math.log(0.6185)) # compute table size in bits 
+    k,m,n,p = bloom_calc.km_from_np(projected_eles, target_fpr)
+    a = sizeof_fmt(m_calc, suffix="b")
+    b = sizeof_fmt(m, suffix="b")
+    # print(f"calculated m to be {a}")
+    print(f"calculated optimal bloom filter size to be {a, b}")
+    return b
+    # print(f"hurst calculated m to be {b}")

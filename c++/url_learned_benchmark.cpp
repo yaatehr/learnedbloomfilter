@@ -18,6 +18,7 @@
 #include <memory>
 #include "Filters/myUtils.cpp"
 #include "Filters/learned_bloom.cpp"
+#include "Filters/bloom_filter.hpp"
 
 class MyFixtureLearned : public benchmark::Fixture
 {
@@ -37,6 +38,7 @@ public:
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture init";
             std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
+
 #endif
 
             MyFixtureLearned::valid_index_map = {};
@@ -73,6 +75,26 @@ public:
             std::cout << "fixture teardown entered";
 #endif
             delete filter;
+      }
+private:
+      void sanityCheck() {
+            std::cout << " TESTING BF SIZE: " << std::endl;
+            bloom_parameters parameters;
+            parameters.projected_element_count = 1000000;
+            parameters.false_positive_probability = .001;
+            if (!parameters)
+            {
+            std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;
+            return;
+            }
+            parameters.compute_optimal_parameters();
+
+            bloom_filter* gbf = new bloom_filter(parameters);
+
+
+            std::cout << " Filter size was : " << gbf->size() << std::endl;
+
+
       }
 };
 
@@ -138,3 +160,6 @@ BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 
 
 
 BENCHMARK_MAIN();
+
+
+
