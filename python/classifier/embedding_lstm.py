@@ -4,7 +4,11 @@ import torch.nn.functional as F
 
 
 class LSTMBasic(nn.Module):
-    def __init__(self, args, num_classes, built_in_dropout=False):
+    """
+    Dropout note - lstm won't apply dropout to the last layer, so the only dropout to be apllies is 
+    #TODO deprecate the build_in_dropout paramm for LSTM, turn to just a switch for dropout
+    """
+    def __init__(self, args, num_classes, built_in_dropout=False): 
         super(LSTMBasic, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim

@@ -90,8 +90,6 @@ private:
             parameters.compute_optimal_parameters();
 
             bloom_filter* gbf = new bloom_filter(parameters);
-
-
             std::cout << " Filter size was : " << gbf->size() << std::endl;
 
 

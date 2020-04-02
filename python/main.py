@@ -112,7 +112,7 @@ def main_loop(args):
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
     # train.run(args)
-    export_model.export_lstm(args)
+    export_model.export_blank_model(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")

@@ -123,3 +123,21 @@ def export_lstm(args, export_dataset=True):
         export_container = torch.jit.script(container.Container(export_values))
         export_container.save(os.path.join(args.root, "python/modelsaves/%s_container.pt" % model_save_name))
         print("container saved successfully")
+
+
+def export_blank_model(args):
+    model_path = os.path.join(args.root, 'python/modelsaves/explicit_lstm_1.pth')
+    model_save_name = "explicit_lstm_1"
+    model, base_model = load_lstm(args, model_path)
+    empty_model = embedding_lstm.LSTMBasic(args, 2, built_in_dropout=False)
+    empty_model.eval()
+
+    model_size = utils.get_model_size(base_model, args)
+    export_size = utils.get_model_size(model, args)
+    empty_size = utils.get_model_size(empty_model, args)
+    a = utils.sizeof_fmt(model_size, suffix="b")
+    b = utils.sizeof_fmt(export_size, suffix="b")
+    # a,b = 0,0
+    c = utils.sizeof_fmt(empty_size, suffix="b")
+
+    print(f"the size of the empty model is {empty_size}\n the size of the base model trained is {a}\n the size of the exoprt model is {b}\n")

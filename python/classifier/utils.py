@@ -5,9 +5,11 @@ import json
 import re
 import numpy as np
 from sklearn import metrics
-import bloom_calc
+from classifier import bloom_calc, pytorch_modelsize
 # text-preprocessing
-
+import sys
+from types import ModuleType, FunctionType
+from gc import get_referents
 
 def lower(text):
     return text.lower()
@@ -172,3 +174,41 @@ def get_bf_size(target_fpr, projected_eles):
     print(f"calculated optimal bloom filter size to be {a, b}")
     return b
     # print(f"hurst calculated m to be {b}")
+
+
+# Custom objects know their class.
+# Function objects seem to know way too much, including modules.
+# Exclude modules as well.
+BLACKLIST = type, ModuleType, FunctionType
+
+def getsize(obj):
+    """sum size of object & members."""
+    if isinstance(obj, BLACKLIST):
+        raise TypeError('getsize() does not take argument of type: '+ str(type(obj)))
+    seen_ids = set()
+    size = 0
+    objects = [obj]
+    while objects:
+        need_referents = []
+        for obj in objects:
+            if not isinstance(obj, BLACKLIST) and id(obj) not in seen_ids:
+                seen_ids.add(id(obj))
+                size += sys.getsizeof(obj)
+                need_referents.append(obj)
+        objects = get_referents(*need_referents)
+    return size
+
+def get_model_size(model, args):
+    input_size = (1, 1, args.max_length*args.embedding_size)
+    se = pytorch_modelsize.SizeEstimator(model, input_size=input_size)
+
+    print("python size estimate: ", getsize(model))
+
+    (total_size, total_input_size, total_output_size, total_params_size), (total_params, trainable_params) = pytorch_modelsize.summary_tuple(model, input_size=input_size)
+    print("total size estimate ", total_size)
+    print("params: ", total_params_size) # bits taken up by parameters
+    print("forward backwards: ", total_output_size) # bits stored for forward and backward
+    print("input bits: ", total_input_size) # bits for input
+    return total_size
+
+    
