@@ -198,9 +198,15 @@ def getsize(obj):
         objects = get_referents(*need_referents)
     return size
 
-def get_model_size(model, args):
-    input_size = (1, 1, args.max_length*args.embedding_size)
-    se = pytorch_modelsize.SizeEstimator(model, input_size=input_size)
+def get_model_size(model, args, input_features=None):
+    input_size = (1, 1, args.max_length*args.embedding_size) if input_features == None else list(input_features.size())
+    try:
+        input_size[0] = 1
+        input_size = tuple(input_size)
+    except:
+        pass
+    print(pytorch_modelsize.summary_string(model, input_size=input_size)[0])
+    print("\n\n\n\n\n\n\n")
 
     print("python size estimate: ", getsize(model))
 

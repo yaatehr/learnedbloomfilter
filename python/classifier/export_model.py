@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from classifier import embedding_cnn, embedding_lstm, embedding_rnn, utils, container
 from data_intake import data_loader, processing
 import pickle
+import time
 # import torch.jit
 
 
@@ -128,16 +129,39 @@ def export_lstm(args, export_dataset=True):
 def export_blank_model(args):
     model_path = os.path.join(args.root, 'python/modelsaves/explicit_lstm_1.pth')
     model_save_name = "explicit_lstm_1"
-    model, base_model = load_lstm(args, model_path)
-    empty_model = embedding_lstm.LSTMBasic(args, 2, built_in_dropout=False)
-    empty_model.eval()
+    base_model = embedding_lstm.LSTMBasic(args, 2)
+    # base_model.load_state_dict(torch.load(model_path))
+    base_model.eval()
 
-    model_size = utils.get_model_size(base_model, args)
-    export_size = utils.get_model_size(model, args)
-    empty_size = utils.get_model_size(empty_model, args)
-    a = utils.sizeof_fmt(model_size, suffix="b")
-    b = utils.sizeof_fmt(export_size, suffix="b")
-    # a,b = 0,0
-    c = utils.sizeof_fmt(empty_size, suffix="b")
+    export_params = {
+        "batch_size": args.batch_size,
+        "shuffle": True,
+        "num_workers": args.workers,
+        "drop_last": True,
+    }
 
-    print(f"the size of the empty model is {empty_size}\n the size of the base model trained is {a}\n the size of the exoprt model is {b}\n")
+    urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+    with open(urls_by_category_path, 'rb') as fp:
+        urls_by_category = pickle.load(fp)
+    training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+    export_generator = DataLoader(training_set, **export_params)
+    i, (feats, labels) = list(enumerate(export_generator))[0]
+    feats = feats.cpu().detach()
+
+    model_size = utils.get_model_size(base_model, args, input_features=feats)
+    print(list(base_model.parameters()))
+    print(list(base_model.modules()))
+    time.sleep(30)
+    return
+    # empty_model = embedding_lstm.LSTMBasic(args, 2, built_in_dropout=False)
+    # empty_model.eval()
+
+    # model_size = utils.get_model_size(base_model, args)
+    # export_size = utils.get_model_size(model, args)
+    # empty_size = utils.get_model_size(empty_model, args)
+    # a = utils.sizeof_fmt(model_size, suffix="b")
+    # b = utils.sizeof_fmt(export_size, suffix="b")
+    # # a,b = 0,0
+    # c = utils.sizeof_fmt(empty_size, suffix="b")
+
+    # print(f"the size of the empty model is {empty_size}\n the size of the base model trained is {a}\n the size of the exoprt model is {b}\n")

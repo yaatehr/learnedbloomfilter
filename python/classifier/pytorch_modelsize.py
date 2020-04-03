@@ -125,7 +125,7 @@ def summary_tuple(model, input_size, batch_size=-1, device=torch.device('cpu'), 
 
 
 
-def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
+def summary_string(model, input_size, batch_size=-1, device=torch.device('cpu'), dtypes=None):
     if dtypes == None:
         dtypes = [torch.FloatTensor]*len(input_size)
 
@@ -142,7 +142,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key]["input_shape"][0] = batch_size
             if isinstance(output, (list, tuple)):
                 summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
+                    [-1] + list(o[0].size())[1:] if isinstance(o, tuple) else [-1] + list(o.size())[1:] for o in output 
                 ]
             else:
                 summary[m_key]["output_shape"] = list(output.size())
