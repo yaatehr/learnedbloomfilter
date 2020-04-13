@@ -161,8 +161,8 @@ public:
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
       torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
-      auto accessor = out_tensor.accessor<float, 2>();
-      return accessor[0][0] < accessor[0][1];
+      auto accessor = out_tensor.accessor<float, 1>();
+      return accessor[0] > 0.5;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
@@ -176,12 +176,12 @@ public:
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
       torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
-      auto accessor = out_tensor.accessor<float, 2>();
+      auto accessor = out_tensor.accessor<float, 1>();
       // std::cout << "first prediction vector: " << out_tensor << std::endl;
       std::vector<bool> outputs;
       for (int i = 0; i < accessor.size(0); i++)
       {
-         bool isMalicious = accessor[i][0] < accessor[i][1]; // if label 0 is smaller than label 1, then 0 is less likely (log softmax outputs)
+         bool isMalicious = accessor[i] > 0.5; 
          outputs.push_back(isMalicious);
       }
       return outputs;
