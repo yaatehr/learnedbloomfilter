@@ -70,8 +70,10 @@ def train(
 
     if args.dry_run:
         i, (feats, labels) = list(enumerate(training_generator))[0]
-        pred_shape = model(feats).shape
-        print("DRY RUNNING, prediction shape will be filled with zeros", pred_shape)
+        temp_out = model(feats)
+        # pred_shape = temp_out.shape
+        print(f"DRY RUNNING, prediction shape will be filled with zeros of shape {temp_out.shape} and type {temp_out.type()}")
+        print(f"labels are {labels.shape} and type {labels.type()}")
 
     for iter, batch in progress_bar:
         features, labels = batch
@@ -84,12 +86,12 @@ def train(
         if not args.dry_run:
             predictions = model(features)
         else:
-            predictions = torch.zeros(pred_shape)
+            predictions = torch.zeros(temp_out.shape)
 
         y_true += labels.cpu().numpy().tolist()
-        y_pred += torch.argmax(predictions, 1).cpu().detach().numpy().tolist()
+        y_pred += torch.round(predictions).cpu().detach().numpy().tolist()
 
-        loss = criterion(predictions, labels)
+        loss = criterion(predictions, labels.float())
         if not args.dry_run:
             loss.backward(retain_graph=True)
 
@@ -178,10 +180,11 @@ def evaluate(
             labels = labels.cuda()
         with torch.no_grad():
             predictions = model(features)
-        loss = criterion(predictions, labels)
 
         y_true += labels.cpu().numpy().tolist()
-        y_pred += torch.max(predictions, 1)[1].cpu().numpy().tolist()
+        y_pred += torch.round(predictions).cpu().detach().numpy().tolist()
+
+        loss = criterion(predictions, labels.float())
 
         validation_metrics = utils.get_evaluation(
             labels.cpu().numpy(),
@@ -391,11 +394,11 @@ def run(args):
     class_names = sorted(list(set(train_labels)))
     class_names = [str(class_name) for class_name in class_names]
     number_of_classes = len(class_names)
-
+    
 
     # model = embedding_cnn.EmbeddingCnn(args, number_of_classes)
     # model = embedding_rnn.GRUBasic(args, number_of_classes)
-    model = embedding_lstm.LSTMBasic(args, number_of_classes)
+    model = embedding_lstm.LSTMBasic(args, 1) #note we are now using sigmoid outputs
     # if torch.cuda.is_available():
     # #     model.cuda()
     # with open("CharLevelCnnData.pkl", 'wb') as f:
@@ -418,9 +421,9 @@ def run(args):
             if torch.cuda.is_available():
                 weights = weights.cuda()
                 print(f"passing weights to CrossEntropyLoss : {weights}")
-                criterion = nn.CrossEntropyLoss(weight=weights)
+                criterion = nn.BCELoss(weight=weights)
         else:
-            criterion = nn.CrossEntropyLoss()
+            criterion = nn.BCELoss()
 
     else:
         if args.alpha is None:

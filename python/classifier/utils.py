@@ -49,12 +49,13 @@ def process_text(steps, text):
 
 
 def get_evaluation(y_true, y_prob, list_metrics):
-    y_pred = np.argmax(y_prob, -1)
+    y_pred = np.round(y_prob)
     output = {}
     if "accuracy" in list_metrics:
         output["accuracy"] = metrics.accuracy_score(y_true, y_pred)
     if "f1" in list_metrics:
         output["f1"] = metrics.f1_score(y_true, y_pred, average="weighted")
+
 
     return output
 

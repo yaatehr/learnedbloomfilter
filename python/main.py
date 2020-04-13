@@ -111,8 +111,8 @@ def main_loop(args):
     # query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    # train.run(args)
-    export_model.export_blank_model(args)
+    train.run(args)
+    # export_model.export_blank_model(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -215,6 +215,8 @@ if __name__ == "__main__":
     parser.add_argument("--debug", type=bool, default=True)
 
     args = parser.parse_args()
+    args.embedding_size_bytes = (len(args.alphabet) + 1) * args.embedding_size * 32 # bytes per float in numpy float32
+
     main_loop(args)
 
 

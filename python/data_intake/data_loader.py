@@ -393,7 +393,7 @@ class EncodedStringLabelDataset(Dataset):
             if self.args.embedding_size != embedding_matrix.shape[1] :
                 pca = PCA(n_components=self.args.embedding_size)
                 pca.fit(embedding_matrix[1:])
-                embedding_matrix_pca = np.array(pca.transform(embedding_matrix[1:]))
+                embedding_matrix_pca = np.array(pca.transform(embedding_matrix[1:]), dtype=np.float32)
                 embedding_matrix_pca = np.insert(embedding_matrix_pca, 0, 0, axis=0)
                 print("PCA matrix created with dims: ", embedding_matrix_pca.shape)
                 self.identity_mat = embedding_matrix_pca

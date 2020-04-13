@@ -69,7 +69,8 @@ class LSTMBasic(nn.Module):
             out_space = self.hidden2out(lstm_out[:, -1])
 
         # TODO experiment with adding a relu here, does it increase accuracy?
-        out_scores = F.log_softmax(out_space, dim=1)
+        # out_scores = F.log_softmax(out_space, dim=1)
+        out_scores = torch.sigmoid(out_space).squeeze()
         return out_scores
 
 
