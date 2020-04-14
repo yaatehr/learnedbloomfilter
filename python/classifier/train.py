@@ -540,7 +540,7 @@ def run(args):
 
         # model checkpoint
 
-        if validation_f1 > best_f1:
+        if validation_f1 > best_f1 or epoch == args.epochs:
             best_f1 = validation_f1
             best_epoch = epoch
             if args.checkpoint == 1:
