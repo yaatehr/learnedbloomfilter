@@ -490,8 +490,8 @@ def run(args):
         if bool(args.use_sampler):
             np.random.seed(epoch)
             # train_sample_weights = torch.from_numpy(train_sample_weights)
-            train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size,), replace=False)) 
-            val_indices = torch.from_numpy(np.random.choice(len(validation_set), size=(args.epoch_set_size//2,), replace=False)) 
+            train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size*args.batch_size,), replace=False)) 
+            val_indices = torch.from_numpy(np.random.choice(len(validation_set), size=(args.epoch_set_size*args.batch_size//2,), replace=False)) 
 
             train_sampler = SubsetRandomSampler(train_indices)
             val_sampler = SubsetRandomSampler(val_indices)
