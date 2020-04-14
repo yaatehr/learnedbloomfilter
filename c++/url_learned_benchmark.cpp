@@ -1,7 +1,7 @@
 #define TORCH_INPUT_LEN 124
 #define INSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
 #define OUTSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
-#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
+#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
 // #ifndef USER_DEBUG_STATEMENTS
 // #define USER_DEBUG_STATEMENTS
 // #endif

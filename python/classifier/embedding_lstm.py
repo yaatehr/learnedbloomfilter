@@ -17,7 +17,7 @@ class LSTMBasic(nn.Module):
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
         self.embedding_size = (
-            args.number_of_characters + len(args.extra_characters)
+            (args.number_of_characters + len(args.extra_characters))*args.max_length
             if args.use_char_encoding
             else args.embedding_size * args.max_length
         )
@@ -80,7 +80,7 @@ class LSTMBasicX(nn.Module):
     """
     LSTM Basic Variant for export. Should be compativle and able to load state dict from the original LSTMBasic Class
     """
-    def __init__(self, args, num_classes, model_path):
+    def __init__(self, args, model_path, num_classes=1):
         super(LSTMBasicX, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim
@@ -92,6 +92,8 @@ class LSTMBasicX(nn.Module):
             if args.use_char_encoding
             else args.embedding_size * args.max_length
         )
+        self.tau = args.tau
+
 
         self.hidden = self.init_hidden()
         self.projected_input_shape = (1, 1, args.max_length*args.embedding_size)
@@ -133,7 +135,8 @@ class LSTMBasicX(nn.Module):
         #TODO verify this assumption
         out_space = self.hidden2out(lstm_out[:, -1])
         # print("out_space: ", out_space)
-        out_scores = F.log_softmax(out_space, dim=1)
+        # out_scores = F.log_softmax(out_space, dim=1)
+        out_scores = torch.sigmoid(out_space).squeeze()
         # print("out scores ", out_scores)
 
         return out_scores

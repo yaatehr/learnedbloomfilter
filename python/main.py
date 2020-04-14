@@ -112,6 +112,7 @@ def main_loop(args):
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
     train.run(args)
+    export_model.export_lstm(args)
     # export_model.export_blank_model(args)
     # extractor.process_crawl()
     if args.debug:
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_sampler", type=int, default=0, choices=[0, 1])
 
     parser.add_argument("--alphabet", type=str, default=DEFAULT_ALPHABET)
-    parser.add_argument("--number_of_characters", type=int, default=69)
+    parser.add_argument("--number_of_characters", type=int, default=62)
     parser.add_argument("--extra_characters", type=str, default="")
     parser.add_argument("--max_length", type=int, default=124)
     parser.add_argument("--url_delimeters", type=str, default=URL_DELIM)

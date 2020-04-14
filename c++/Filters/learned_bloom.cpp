@@ -15,7 +15,7 @@
 #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1_container.pt"
 #endif
 #ifndef DATASET_PATH
-#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
+#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
 #endif
 
 #include <iostream>
@@ -44,6 +44,7 @@ public:
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
    std::vector<std::string> data_strings;
+   float tau;
 
    static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
                      std::shared_ptr<torch::Tensor> /*labels*/,
@@ -127,6 +128,7 @@ public:
          std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
       classifier = load_classifier(MODEL_PATH);
+      init_tau(classifier);
       std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
       data_strings = load_dataset(DATASET_PATH);
       evaluate_classifier();
@@ -142,7 +144,7 @@ public:
                      std::vector<int> i,
                      std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
    {
-
+      init_tau(classifier);
       evaluate_classifier();
       init_generic_bloom(p, f);
    }
@@ -156,13 +158,24 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
+   void init_tau(std::shared_ptr<torch::jit::script::Module> classifier) {
+         if(classifier->hasattr("tau")) {
+         torch::Tensor tau = classifier->attr("tau").toTensor();
+         torch::TensorAccessor<float, 1> accessor = tau.accessor<float, 1>();
+         this->tau = accessor[0];
+      } else {
+         std::cout << "No tau found on container, initializing to 0.5" << std::endl;
+         this->tau = 0.5;
+      }
+   }
+
    bool predict(torch::Tensor input) //TODO deprecate
    {
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
       torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
       auto accessor = out_tensor.accessor<float, 1>();
-      return accessor[0] > 0.5;
+      return accessor[0] > tau;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
@@ -181,7 +194,7 @@ public:
       std::vector<bool> outputs;
       for (int i = 0; i < accessor.size(0); i++)
       {
-         bool isMalicious = accessor[i] > 0.5; 
+         bool isMalicious = accessor[i] > tau; 
          outputs.push_back(isMalicious);
       }
       return outputs;

@@ -27,7 +27,7 @@ import gc
 
 
 def export_train_val_test(training_set, validation_set, test_set):
-    dir_path = os.path.join(training_set.args.root, "input/dataset")
+    dir_path = os.path.join(training_set.args.root, "input/timestamp_dataset")
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     with open(os.path.join(dir_path, "training_set.txt"), 'w') as train_file:
@@ -361,12 +361,15 @@ def run(args):
     #     ) = pickle.load(open(cached_data_path, "rb"))
     #     print("loaded cached training data")
 
-    dataset_path = os.path.join(args.root, "input/dataset/train_val_test.pkl")
+    dataset_path = os.path.join(args.root, "input/timestamp_dataset/train_val_test.pkl")
     if not os.path.exists(dataset_path):
-        urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
-        with open(urls_by_category_path, 'rb') as fp:
-            urls_by_category = pickle.load(fp)
-        training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+        # urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+        # with open(urls_by_category_path, 'rb') as fp:
+        #     urls_by_category = pickle.load(fp)
+        texts, labels, tokens, _, _ = data_loader.load_data(args)
+        string_labels = [str(x) for x in labels]
+
+        training_set = data_loader.EncodedStringLabelDataset(args, init_tuple=(texts, string_labels, labels, None))
         init_tuple = training_set.split_train_val()
         validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
         init_tuple = training_set.split_train_val(split_size=.2222222)
@@ -382,10 +385,10 @@ def run(args):
             print("loaded val set: ", validation_set.counter)
             print("loaded test set: ", test_set.counter)
         except:
-            urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
-            with open(urls_by_category_path, 'rb') as fp:
-                urls_by_category = pickle.load(fp)
-            training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+            texts, labels, tokens, _, _ = data_loader.load_data(args)
+            string_labels = [str(x) for x in labels]
+
+            training_set = data_loader.EncodedStringLabelDataset(args, init_tuple=(texts, string_labels, labels, None))
             init_tuple = training_set.split_train_val()
             validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
             init_tuple = training_set.split_train_val(split_size=.2222222)
@@ -394,7 +397,6 @@ def run(args):
             validation_set.select_subset(balanceWeights=True)
             test_set.select_subset(balanceWeights=True)
             export_train_val_test(training_set, validation_set, test_set)
-
 
     if bool(args.use_sampler):
         train_sample_weights = torch.from_numpy(train_sample_weights)

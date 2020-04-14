@@ -220,7 +220,7 @@ class EncodedStringLabelDataset(Dataset):
     def __getitem__(self, index):
         #TODO would memoizing these embeddings be too large? ie making an embedded url matrix as we go?
         if not self.args.use_word2vec_encoding:
-            embedding_size = self.number_of_characters if self.args.use_char_encoding else self.args.embedding_size
+            embedding_size = len(self.tokenizer.alphabet) if self.args.use_char_encoding else self.args.embedding_size
             raw_text = self.texts[index]
             data = np.array([self.identity_mat[self.tokenizer.alphabet.index(i.lower())] for i in list(raw_text)[::-1] if i.lower() in self.tokenizer.alphabet],
                             dtype=np.float32) #TODO why is this backwards?

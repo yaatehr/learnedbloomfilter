@@ -11,11 +11,12 @@ import pickle
 import time
 # import torch.jit
 
+#TODO add tau evaluation method here
 
 def load_lstm(args, model_path):
     #TODO load the original model and test what the outputs are on this side. they should match. 
-    export_model = embedding_lstm.LSTMBasicX(args, 2, model_path)
-    base_model = embedding_lstm.LSTMBasic(args, 2)
+    export_model = embedding_lstm.LSTMBasicX(args, model_path)
+    base_model = embedding_lstm.LSTMBasic(args)
     export_model.eval()
     base_model.load_state_dict(torch.load(model_path))
     base_model.eval()
@@ -45,7 +46,7 @@ def export_lstm(args, export_dataset=True):
     print("MODEL SAVED!")
 
     if export_dataset:
-        dataset_path = os.path.join(args.root, "input/dataset/train_val_test.pkl")
+        dataset_path = os.path.join(args.root, "input/timestamp_dataset/train_val_test.pkl")
         try:
             training_set, validation_set, test_set = pickle.load(open(dataset_path, 'rb'))
             print("loaded train set: ", training_set.counter)
@@ -129,7 +130,7 @@ def export_lstm(args, export_dataset=True):
 def export_blank_model(args):
     model_path = os.path.join(args.root, 'python/modelsaves/explicit_lstm_1.pth')
     model_save_name = "explicit_lstm_1"
-    base_model = embedding_lstm.LSTMBasic(args, 2)
+    base_model = embedding_lstm.LSTMBasic(args)
     # base_model.load_state_dict(torch.load(model_path))
     base_model.eval()
 
