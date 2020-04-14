@@ -425,6 +425,17 @@ def run(args):
     # with open("CharLevelCnn.pkl", 'wb') as f:
     #     pickle.dump(model, f, fix_imports=False)
     #     # return
+    i, (feats, labels) = list(enumerate(training_generator))[0]
+    model_size = utils.get_model_size(model, args, input_features=feats)
+    args.total_model_size = model_size + args.embedding_size_bits
+    gbf_size = utils.get_bf_size(.0001, int(21696/2))#TODO Parameterize this
+    if args.total_model_size > gbf_size:
+        print("NOTE: this classifier is too large and will not beat out a GBF, please reconfigure and try again")
+        return
+    else:
+        print(f"Embedding size: {args.embedding_size_bits}")
+        print(f"Total model size: {args.total_model_size}\ngbf size: {gbf_size}")
+        print(f"{gbf_size - args.total_model_size}: bits remain for a backup filter")
 
     if not bool(args.focal_loss):
         if bool(args.class_weights):

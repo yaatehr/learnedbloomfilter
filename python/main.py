@@ -216,7 +216,7 @@ if __name__ == "__main__":
     parser.add_argument("--debug", type=bool, default=True)
 
     args = parser.parse_args()
-    args.embedding_size_bytes = (len(args.alphabet) + 1) * args.embedding_size * 32 # bytes per float in numpy float32
+    args.embedding_size_bits = (len(args.alphabet) + 1) * args.embedding_size * 32 # bits per float in numpy float32
 
     main_loop(args)
 

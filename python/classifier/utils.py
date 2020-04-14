@@ -63,6 +63,22 @@ def get_evaluation(y_true, y_prob, args, list_metrics):
     return output
 
 
+def mitzenmacher_theorem(alpha, fpr, fnr, b, zeta, m):
+    """
+        alpha - usually predetermined (~0.6185), the rate at which fpr falls in a generic bloom filter is alpha^b where b is bits per item
+        fpr - lbf false positive rate (emp.)
+        fnr - lbf false negative rate (emp.)
+        b - bits per item
+        zeta - size of learned classifier
+        m - number of keys in the in set ()
+        returns - scalar value, if it is greater than or equal to 0, the LBF can potentiallly save space!
+    """
+
+    lhs = zeta / float(m)
+    inner_term = fpr + (1 - fpr)*alpha**(b/ fnr)
+    rhs = math.log(inner_term, alpha) -b
+    return rhs - lhs
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
@@ -176,7 +192,7 @@ def get_bf_size(target_fpr, projected_eles):
     b = sizeof_fmt(m, suffix="b")
     # print(f"calculated m to be {a}")
     print(f"calculated optimal bloom filter size to be {a, b}")
-    return b
+    return m
     # print(f"hurst calculated m to be {b}")
 
 
@@ -219,6 +235,6 @@ def get_model_size(model, args, input_features=None):
     print("params: ", total_params_size) # bits taken up by parameters
     print("forward backwards: ", total_output_size) # bits stored for forward and backward
     print("input bits: ", total_input_size) # bits for input
-    return total_size
+    return float(total_size)
 
     
