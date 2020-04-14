@@ -7,8 +7,9 @@ class LSTMBasic(nn.Module):
     """
     Dropout note - lstm won't apply dropout to the last layer, so the only dropout to be apllies is 
     #TODO deprecate the build_in_dropout paramm for LSTM, turn to just a switch for dropout
+    #NOTE do not change the number of classes unless you want to switch off of binary classification (and change criterion/ training logic)
     """
-    def __init__(self, args, num_classes, built_in_dropout=False): 
+    def __init__(self, args, num_classes=1, built_in_dropout=False): 
         super(LSTMBasic, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim
@@ -21,6 +22,7 @@ class LSTMBasic(nn.Module):
             else args.embedding_size * args.max_length
         )
         self.built_in_dropout = built_in_dropout
+        self.tau = args.tau
 
         if not built_in_dropout:
             self.lstm = nn.LSTM(

@@ -166,6 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--embedding_window", type=int, default=3)
     parser.add_argument("--embedding_size", type=int, default=32)
     parser.add_argument("--embedding_path", type=str, default=os.path.join(DIRECTORY_ROOT, 'input/glove.6B.50d-char.txt'))
+    parser.add_argument("--tau", type=float, default=0.5)
 
     # training params
     parser.add_argument("--workers", type=int, default=1)

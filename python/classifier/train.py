@@ -61,6 +61,7 @@ def train(
     model.train()
     losses = utils.AverageMeter()
     accuracies = utils.AverageMeter()
+    bloom_threshold_accuracies = utils.AverageMeter()
     num_iter_per_epoch = len(training_generator)
 
     progress_bar = tqdm(enumerate(training_generator), total=num_iter_per_epoch)
@@ -102,11 +103,13 @@ def train(
         training_metrics = utils.get_evaluation(
             labels.cpu().numpy(),
             predictions.cpu().detach().numpy(),
-            list_metrics=["accuracy", "f1"],
+            args,
+            list_metrics=["accuracy", "f1", "bloom_threshold_accuracy"],
         )
 
         losses.update(loss.data, features.size(0))
         accuracies.update(training_metrics["accuracy"], features.size(0))
+        bloom_threshold_accuracies.update(training_metrics["bloom_threshold_accuracy"], features.size(0))
 
         f1 = training_metrics["f1"]
 
@@ -118,14 +121,20 @@ def train(
             epoch * num_iter_per_epoch + iter,
         )
 
+        writer.add_scalar(
+            "Train/Threshold_Accuracy",
+            training_metrics["bloom_threshold_accuracy"],
+            epoch * num_iter_per_epoch + iter,
+        )
+
         writer.add_scalar("Train/f1", f1, epoch * num_iter_per_epoch + iter)
 
         lr = optimizer.state_dict()["param_groups"][0]["lr"]
 
         if (iter % print_every == 0) and (iter > 0):
             print(
-                "[Training - Epoch: {}], LR: {} , Iteration: {}/{} , Loss: {}, Accuracy: {}".format(
-                    epoch + 1, lr, iter, num_iter_per_epoch, losses.avg, accuracies.avg
+                "[Training - Epoch: {}], LR: {} , Iteration: {}/{} , Loss: {}, Accuracy: {}, Thresholded Accuracy: {}".format(
+                    epoch + 1, lr, iter, num_iter_per_epoch, losses.avg, accuracies.avg, bloom_threshold_accuracies.avg
                 )
             )
 
@@ -145,6 +154,7 @@ def train(
 
     writer.add_scalar("Train/loss/epoch", losses.avg, epoch + iter)
     writer.add_scalar("Train/acc/epoch", accuracies.avg, epoch + iter)
+    writer.add_scalar("Train/threshAcc/epoch", bloom_threshold_accuracies.avg, epoch + iter)
     writer.add_scalar("Train/f1/epoch", f1_train, epoch + iter)
 
     report = classification_report(y_true, y_pred)
@@ -154,20 +164,22 @@ def train(
         f.write(f"Training on Epoch {epoch} \n")
         f.write(f"Average loss: {losses.avg.item()} \n")
         f.write(f"Average accuracy: {accuracies.avg.item()} \n")
+        f.write(f"Average thresholded accuracy: {bloom_threshold_accuracies.avg.item()} \n")
         f.write(f"F1 score: {f1_train} \n\n")
         f.write(report)
         f.write("*" * 25)
         f.write("\n")
 
-    return losses.avg.item(), accuracies.avg.item(), f1_train
+    return losses.avg.item(), accuracies.avg.item(), f1_train, bloom_threshold_accuracies.avg.item()
 
 
 def evaluate(
-    model, validation_generator, criterion, epoch, writer, log_file, print_every=25
+    model, validation_generator, criterion, epoch, writer, log_file, args, print_every=25
 ):
     model.eval()
     losses = utils.AverageMeter()
     accuracies = utils.AverageMeter()
+    bloom_threshold_accuracies = utils.AverageMeter()
     num_iter_per_epoch = len(validation_generator)
 
     y_true = []
@@ -189,24 +201,29 @@ def evaluate(
         validation_metrics = utils.get_evaluation(
             labels.cpu().numpy(),
             predictions.cpu().detach().numpy(),
-            list_metrics=["accuracy", "f1"],
+            args,
+            list_metrics=["accuracy", "f1", "bloom_threshold_accuracy"],
         )
         accuracy = validation_metrics["accuracy"]
         f1 = validation_metrics["f1"]
+        thresh_accuracy = validation_metrics["bloom_threshold_accuracy"]
 
         losses.update(loss.data, features.size(0))
         accuracies.update(validation_metrics["accuracy"], features.size(0))
+        bloom_threshold_accuracies.update(validation_metrics["bloom_threshold_accuracy"], features.size(0))
 
         writer.add_scalar("Test/Loss", loss.item(), epoch * num_iter_per_epoch + iter)
 
         writer.add_scalar("Test/Accuracy", accuracy, epoch * num_iter_per_epoch + iter)
 
+        writer.add_scalar("Test/Thresholded Accuracy", thresh_accuracy, epoch * num_iter_per_epoch + iter)
+
         writer.add_scalar("Test/f1", f1, epoch * num_iter_per_epoch + iter)
 
         if (iter % print_every == 0) and (iter > 0):
             print(
-                "[Validation - Epoch: {}] , Iteration: {}/{} , Loss: {}, Accuracy: {}".format(
-                    epoch + 1, iter, num_iter_per_epoch, losses.avg, accuracies.avg
+                "[Validation - Epoch: {}] , Iteration: {}/{} , Loss: {}, Accuracy: {}, Thresholded Accuracy: {}".format(
+                    epoch + 1, iter, num_iter_per_epoch, losses.avg, accuracies.avg, bloom_threshold_accuracies.avg
                 )
             )
         gc.collect()
@@ -215,6 +232,7 @@ def evaluate(
 
     writer.add_scalar("Test/loss/epoch", losses.avg, epoch + iter)
     writer.add_scalar("Test/acc/epoch", accuracies.avg, epoch + iter)
+    writer.add_scalar("Test/threshAcc/epoch", bloom_threshold_accuracies.avg, epoch + iter)
     writer.add_scalar("Test/f1/epoch", f1_test, epoch + iter)
 
     report = classification_report(y_true, y_pred)
@@ -224,12 +242,13 @@ def evaluate(
         f.write(f"Validation on Epoch {epoch} \n")
         f.write(f"Average loss: {losses.avg.item()} \n")
         f.write(f"Average accuracy: {accuracies.avg.item()} \n")
+        f.write(f"Average thresholded accuracy: {bloom_threshold_accuracies.avg.item()} \n")
         f.write(f"F1 score {f1_test} \n\n")
         f.write(report)
         f.write("=" * 50)
         f.write("\n")
 
-    return losses.avg.item(), accuracies.avg.item(), f1_test
+    return losses.avg.item(), accuracies.avg.item(), f1_test,  bloom_threshold_accuracies.avg.item()
 
 
 def run(args):
@@ -398,7 +417,7 @@ def run(args):
 
     # model = embedding_cnn.EmbeddingCnn(args, number_of_classes)
     # model = embedding_rnn.GRUBasic(args, number_of_classes)
-    model = embedding_lstm.LSTMBasic(args, 1) #note we are now using sigmoid outputs
+    model = embedding_lstm.LSTMBasic(args) #note we are now using sigmoid outputs
     # if torch.cuda.is_available():
     # #     model.cuda()
     # with open("CharLevelCnnData.pkl", 'wb') as f:
@@ -456,7 +475,7 @@ def run(args):
         scheduler = None
 
     for epoch in range(args.epochs):
-        training_loss, training_accuracy, train_f1 = train(
+        training_loss, training_accuracy, train_f1, train_thresh_acc = train(
             model,
             training_generator,
             optimizer,
@@ -470,24 +489,28 @@ def run(args):
             args.log_every,
         )
 
-        validation_loss, validation_accuracy, validation_f1 = evaluate(
+        validation_loss, validation_accuracy, validation_f1, validation_thresh_acc = evaluate(
             model,
             validation_generator,
             criterion,
             epoch,
             writer,
             log_file,
+            args,
             args.log_every,
         )
 
         print(
-            "[Epoch: {} / {}]\ttrain_loss: {:.4f} \ttrain_acc: {:.4f} \tval_loss: {:.4f} \tval_acc: {:.4f}".format(
+            "[Epoch: {} / {}]\ttrain_loss: {:.4f} \ttrain_acc: {:.4f} \ttrain_thresh_acc: {:.4f} \tval_loss: {:.4f} \tval_acc: {:.4f} \tval_thresh_acc: {:.4f} \ttau: {:.2f}".format(
                 epoch + 1,
                 args.epochs,
                 training_loss,
                 training_accuracy,
+                train_thresh_acc,
                 validation_loss,
                 validation_accuracy,
+                validation_thresh_acc,
+                args.tau
             )
         )
         print("=" * 50)

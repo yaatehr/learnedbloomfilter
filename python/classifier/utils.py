@@ -48,14 +48,17 @@ def process_text(steps, text):
 # metrics // model evaluations
 
 
-def get_evaluation(y_true, y_prob, list_metrics):
+def get_evaluation(y_true, y_prob, args, list_metrics):
     y_pred = np.round(y_prob)
     output = {}
     if "accuracy" in list_metrics:
         output["accuracy"] = metrics.accuracy_score(y_true, y_pred)
     if "f1" in list_metrics:
         output["f1"] = metrics.f1_score(y_true, y_pred, average="weighted")
-
+    if "bloom_threshold_accuracy" in list_metrics:
+        bloom_pred = (y_prob > args.tau).astype(np.float32)
+        # print(bloom_pred)
+        output["bloom_threshold_accuracy"] = metrics.accuracy_score(y_true, bloom_pred)
 
     return output
 
