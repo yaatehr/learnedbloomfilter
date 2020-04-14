@@ -13,7 +13,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import DataLoader, WeightedRandomSampler, SubsetRandomSampler
 from tensorboardX import SummaryWriter
 
 from data_intake import data_loader
@@ -398,14 +398,13 @@ def run(args):
             test_set.select_subset(balanceWeights=True)
             export_train_val_test(training_set, validation_set, test_set)
 
-    if bool(args.use_sampler):
-        train_sample_weights = torch.from_numpy(train_sample_weights)
-        sampler = WeightedRandomSampler(
-            train_sample_weights.type("torch.DoubleTensor"),
-            len(train_sample_weights),
-        )
-        training_params["sampler"] = sampler
-        training_params["shuffle"] = False
+    # if bool(args.use_sampler):
+    #     # train_sample_weights = torch.from_numpy(train_sample_weights)
+    #     train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size,), replace=False)) 
+
+    #     sampler = SubsetRandomSampler()
+    #     training_params["sampler"] = sampler
+    #     training_params["shuffle"] = False
 
     training_generator = DataLoader(training_set, **training_params)
     validation_generator = DataLoader(validation_set, **validation_params)
@@ -488,6 +487,22 @@ def run(args):
         scheduler = None
 
     for epoch in range(args.epochs):
+        if bool(args.use_sampler):
+            np.random.seed(epoch)
+            # train_sample_weights = torch.from_numpy(train_sample_weights)
+            train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size,), replace=False)) 
+            val_indices = torch.from_numpy(np.random.choice(len(validation_set), size=(args.epoch_set_size//2,), replace=False)) 
+
+            train_sampler = SubsetRandomSampler(train_indices)
+            val_sampler = SubsetRandomSampler(val_indices)
+            training_params["sampler"] = train_sampler
+            training_params["shuffle"] = False
+            validation_params["sampler"] = val_sampler
+            validation_params["shuffle"] = False
+
+        training_generator = DataLoader(training_set, **training_params)
+        validation_generator = DataLoader(validation_set, **validation_params)
+
         training_loss, training_accuracy, train_f1, train_thresh_acc = train(
             model,
             training_generator,
