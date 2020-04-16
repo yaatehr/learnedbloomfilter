@@ -427,15 +427,15 @@ def run(args):
     #     # return
     i, (feats, labels) = list(enumerate(training_generator))[0]
     model_size = utils.get_model_size(model, args, input_features=feats)
-    args.total_model_size = model_size + args.embedding_size_bits
+    model.size_in_bitse = model_size + args.embedding_size_bits
     gbf_size = utils.get_bf_size(.0001, int(21696/2))#TODO Parameterize this
-    if args.total_model_size > gbf_size:
+    if model.size_in_bits > gbf_size:
         print("NOTE: this classifier is too large and will not beat out a GBF, please reconfigure and try again")
         return
     else:
         print(f"Embedding size: {args.embedding_size_bits}")
-        print(f"Total model size: {args.total_model_size}\ngbf size: {gbf_size}")
-        print(f"{gbf_size - args.total_model_size}: bits remain for a backup filter")
+        print(f"Total model size: {model.size_in_bits}\ngbf size: {gbf_size}")
+        print(f"{gbf_size - model.size_in_bits}: bits remain for a backup filter")
 
     if not bool(args.focal_loss):
         if bool(args.class_weights):
@@ -477,6 +477,7 @@ def run(args):
 
     best_f1 = 0
     best_epoch = 0
+    best_model_path = ""
 
     if args.scheduler == "clr":
         stepsize = int(args.stepsize * len(training_generator))
@@ -484,6 +485,9 @@ def run(args):
         scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, [clr])
     else:
         scheduler = None
+
+
+
 
     for epoch in range(args.epochs):
         training_loss, training_accuracy, train_f1, train_thresh_acc = train(
@@ -555,6 +559,7 @@ def run(args):
                         round(validation_f1, 4),
                     ),
                 )
+                torch.save(os.path.join(args.root, f"input/dataset/{args.model_name}.pth"))
 
         if bool(args.early_stopping):
             if epoch - best_epoch > args.patience > 0:
@@ -565,3 +570,4 @@ def run(args):
                 )
                 break
 
+        

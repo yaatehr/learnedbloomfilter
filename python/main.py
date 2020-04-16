@@ -111,8 +111,8 @@ def main_loop(args):
     # query_google_sb(args)
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
-    train.run(args)
-    # export_model.export_blank_model(args)
+    # train.run(args)
+    export_model.export_lstm(args)
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
