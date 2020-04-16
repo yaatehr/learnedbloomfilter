@@ -141,8 +141,9 @@ def export_lstm(args, export_dataset=True):
         validation_generator = DataLoader(validation_set, **export_params)
         test_generator = DataLoader(test_set, **export_params)
 
-        optimal_tau_dict = find_optimal_tau_vals(model, test_generator)
+        optimal_tau_dict = find_optimal_tau_vals(model, test_generator, projected_num_eles=test_set.get_num_positive_samples())
         best_tau = optimal_tau_dict.values()[0]
+        num_pos_samples = test_set.get_num_positive_samples()
         print(f"found best tau: {best_tau}")
 
         total_errors = test_model(base_model, validation_generator) 
@@ -174,13 +175,12 @@ def export_lstm(args, export_dataset=True):
                 Model name: {args.model_name}
                 Model size (bits): {model.size_in_bits}
                 Model path: {model_path}
+                Num Positive Samples: {num_pos_samples}
                 """)
 
             metadata_file.write("="*25 + " Tau Thresholds " + "="*25 + "\n")
             for k,v in optimal_tau_dict.items():
                 metadata_file.write(f"Tau: {k} - {v}\n")
-
-
 
             metadata_file.write("="*25 + " Args " + "="*25 + "\n")
             for k,v in args.__dict__:

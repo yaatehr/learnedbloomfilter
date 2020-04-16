@@ -428,7 +428,7 @@ def run(args):
     i, (feats, labels) = list(enumerate(training_generator))[0]
     model_size = utils.get_model_size(model, args, input_features=feats)
     model.size_in_bitse = model_size + args.embedding_size_bits
-    gbf_size = utils.get_bf_size(.0001, int(21696/2))#TODO Parameterize this
+    gbf_size = utils.get_bf_size(.0001, test_set.get_num_positive_samples())#TODO Parameterize this
     if model.size_in_bits > gbf_size:
         print("NOTE: this classifier is too large and will not beat out a GBF, please reconfigure and try again")
         return

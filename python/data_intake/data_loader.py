@@ -540,3 +540,6 @@ class EncodedStringLabelDataset(Dataset):
             self.tokens = train_tokens
             self._init_class_indices_and_counter()
             return (val_texts, val_string_labels, val_labels, val_tokens)
+
+        def get_num_positive_samples(self):
+            return np.sum(self.labels)
