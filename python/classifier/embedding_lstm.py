@@ -22,7 +22,6 @@ class LSTMBasic(nn.Module):
             else args.embedding_size * args.max_length
         )
         self.built_in_dropout = built_in_dropout
-        self.size_in_bits = 99999999999999999999 # init model size to be huge
 
         if not built_in_dropout:
             self.lstm = nn.LSTM(
@@ -80,7 +79,7 @@ class LSTMBasicX(nn.Module):
     """
     LSTM Basic Variant for export. Should be compativle and able to load state dict from the original LSTMBasic Class
     """
-    def __init__(self, args, model_path, num_classes=1, size_in_bits=99999999999999999999):
+    def __init__(self, args, model_path, num_classes=1):
         super(LSTMBasicX, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim
@@ -92,8 +91,6 @@ class LSTMBasicX(nn.Module):
             if args.use_char_encoding
             else args.embedding_size * args.max_length
         )
-        self.size_in_bits = size_in_bits # init model size to be huge
-
 
         self.hidden = self.init_hidden()
         self.projected_input_shape = (1, 1, args.max_length*args.embedding_size)
@@ -138,6 +135,5 @@ class LSTMBasicX(nn.Module):
         # out_scores = F.log_softmax(out_space, dim=1)
         # print("out scores ", out_scores)
         out_scores = torch.sigmoid(out_space).squeeze()
-
 
         return out_scores
