@@ -88,8 +88,8 @@ def load_lstm(args, model_path):
     return export_model, base_model
 
 def export_lstm(args, export_dataset=True):
-    model_path = os.path.join(args.root, 'python/modelsaves/explicit_lstm_2.pth')
-    model_save_name = "explicit_lstm_2"
+    model_path = os.path.join(args.root, 'python/modelsaves/timestamp_lstm_1.pth')
+    model_save_name = "timestamp_lstm_1"
     model, base_model = load_lstm(args, model_path)
     print("model loaded")
     dataset = data_loader.EncodedStringLabelDataset(args, init_tuple=(["test"]*2000, ["label"]*2000, [0]*2000, None))
@@ -146,8 +146,9 @@ def export_lstm(args, export_dataset=True):
         test_generator = DataLoader(test_set, **export_params)
 
         i, (feats, labels) = list(enumerate(test_generator))[0]
+        print(feats.shape)
         model_size = utils.get_model_size(model, args, input_features=feats)
-        total_model_size = model_size + args.embedding_size_bits
+        total_model_size = model_size + ( 0 if args.use_char_encoding else args.embedding_size_bits)
 
         optimal_tau_dict = find_optimal_tau_vals(model, test_generator, total_model_size, projected_num_eles=test_set.get_num_positive_samples())
         # best_tau = list(optimal_tau_dict.values())[0]
