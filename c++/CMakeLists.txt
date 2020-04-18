@@ -5,7 +5,7 @@ project(learned_b VERSION 1.0)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(warnings "-Wall -Wextra -Werror")
+    set(warnings "-Wall -Wextra ")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(warnings "/W4 /WX /EHsc")
 endif()
@@ -19,7 +19,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_BUILD_TYPE Release)
-# message("cmake compiler id is: ${CMAKE_CXX_COMPILER_ID}" )
+message("cmake compiler id is: ${CMAKE_CXX_COMPILER_ID}" )
 
 #BEGIN PROJECT CONFIG
 include_directories(
@@ -55,7 +55,7 @@ if(benchmark_FOUND)
 endif()
 mark_as_advanced(benchmark_INCLUDE_DIR benchmark_LIBRARY)
 list(APPEND CMAKE_PREFIX_PATH "/Users/yaatehr/programs/libtorch")
-find_package(torch REQUIRED)
+find_package(Torch REQUIRED)
 
 
 ### LINK LIBRARIES
@@ -82,7 +82,7 @@ target_link_libraries(learned_b "${TORCH_LIBRARIES}")
 
 
 # SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}")
-set_property(TARGET learned_b PROPERTY CXX_STANDARD 11)
+set_property(TARGET learned_b PROPERTY CXX_STANDARD 17)
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL
     "A flag showing that CMake has configured at least once.")
 

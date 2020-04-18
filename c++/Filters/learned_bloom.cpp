@@ -7,12 +7,12 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2.pt"
+#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/timestamp_lstm_1.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2_container.pt"
+#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/timestamp_lstm_1_container.pt"
 #endif
 #ifndef DATASET_PATH
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
@@ -128,7 +128,6 @@ public:
          std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
       classifier = load_classifier(MODEL_PATH);
-      init_tau(classifier);
       std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
       tau = 0.5;
       data_strings = load_dataset(DATASET_PATH);
