@@ -7,12 +7,12 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1.pt"
+#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1_container.pt"
+#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2_container.pt"
 #endif
 #ifndef DATASET_PATH
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
@@ -44,7 +44,7 @@ public:
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
    std::vector<std::string> data_strings;
-   float tau;
+   double tau;
 
    static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
                      std::shared_ptr<torch::Tensor> /*labels*/,
@@ -57,8 +57,8 @@ public:
          // check for valid container
          if(! (container.hasattr("data") && container.hasattr("labels"))) {
             throw new std::logic_error("data path " + data_path + " points to a container without data and label attributes. Check your pytorch export \n");
-
          }
+         
          torch::Tensor a = container.attr("data").toTensor();
          torch::Tensor b = container.attr("labels").toTensor();
          torch::TensorAccessor<float, 1> accessor = b.accessor<float, 1>();
@@ -130,6 +130,7 @@ public:
       classifier = load_classifier(MODEL_PATH);
       init_tau(classifier);
       std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
+      tau = 0.5;
       data_strings = load_dataset(DATASET_PATH);
       evaluate_classifier();
       init_generic_bloom(projected_ele_count, false_pos_probability);
@@ -144,7 +145,7 @@ public:
                      std::vector<int> i,
                      std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
    {
-      init_tau(classifier);
+      tau = 0.5;
       evaluate_classifier();
       init_generic_bloom(p, f);
    }
@@ -158,24 +159,22 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
-   void init_tau(std::shared_ptr<torch::jit::script::Module> classifier) {
-         if(classifier->hasattr("tau")) {
-         torch::Tensor tau = classifier->attr("tau").toTensor();
-         torch::TensorAccessor<float, 1> accessor = tau.accessor<float, 1>();
-         this->tau = accessor[0];
-      } else {
-         std::cout << "No tau found on container, initializing to 0.5" << std::endl;
-         this->tau = 0.5;
+   void set_tau(double t) {
+      if(tau > 1 || tau < 0) { 
+         return;
       }
+      tau = t;
    }
 
    bool predict(torch::Tensor input) //TODO deprecate
    {
+      if (tau ==1) {
+         return false;
+      }
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
-      auto accessor = out_tensor.accessor<float, 1>();
-      return accessor[0] > tau;
+      auto out = classifier->forward(inputs).toTensor().data<float>();
+      return *out > tau;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
@@ -185,6 +184,10 @@ public:
 
    std::vector<bool> predict_batch(torch::Tensor input)
    {
+      if (tau == 1) {
+         std::vector<bool> vec(input.accessor<float, 2>().size(0), false);
+         return vec;
+      }
       // std::cout << input << std::endl;
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
@@ -251,6 +254,27 @@ public:
       }
    }
 
+   /**
+    * returns a count of the number of predicted positives from ensemble
+    */
+   int batch_query_count(std::vector<int> indices, bool valid_indices)
+   {
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter batch query count" << std::endl;
+#endif
+      int num_false_positives = 0;
+      auto predictions = query(indices);
+      for(auto p : predictions) {
+         if(p ^ valid_indices){
+            num_false_positives++;
+         }
+      }
+
+#ifdef USER_DEBUG_STATEMENTS
+      std::cout << "Learned bloom filter batch query count returning..." << std::endl;
+#endif
+      return num_false_positives;
+   }
 
 ///////////////////////////////////////////////////?
 ///////////////////////////////////////////////////?
@@ -360,29 +384,6 @@ public:
 #endif
       return sum_false_pos;
    }
-
-   /**
-    * returns a count of the number of predicted positives from ensemble
-    */
-   int batch_query_count(std::vector<int> indices, bool valid_indices)
-   {
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter batch query count" << std::endl;
-#endif
-      int num_false_positives = 0;
-      auto predictions = query(indices);
-      for(auto p : predictions) {
-         if(p ^ valid_indices){
-            num_false_positives++;
-         }
-      }
-
-#ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter batch query count returning..." << std::endl;
-#endif
-      return num_false_positives;
-   }
-
    void insert(std::string input)
    {
 #ifdef USER_DEBUG_STATEMENTS
@@ -458,7 +459,7 @@ private:
       std::cout << "false_pos_probability: " << 1.0 / (float)false_pos_probability << std::endl;
 #endif
 
-      parameters.false_positive_probability = 1.0 / (float)false_pos_probability;
+      parameters.false_positive_probability = false_pos_probability;
       if (!parameters)
       {
          std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;

@@ -22,7 +22,6 @@ class LSTMBasic(nn.Module):
             else args.embedding_size * args.max_length
         )
         self.built_in_dropout = built_in_dropout
-        self.tau = args.tau
 
         if not built_in_dropout:
             self.lstm = nn.LSTM(
@@ -136,7 +135,7 @@ class LSTMBasicX(nn.Module):
         out_space = self.hidden2out(lstm_out[:, -1])
         # print("out_space: ", out_space)
         # out_scores = F.log_softmax(out_space, dim=1)
-        out_scores = torch.sigmoid(out_space).squeeze()
         # print("out scores ", out_scores)
+        out_scores = torch.sigmoid(out_space).squeeze()
 
         return out_scores
