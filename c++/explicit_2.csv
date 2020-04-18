@@ -1,13 +1,3 @@
-2020-04-17 11:04:25
-Running ./bin/learned_b
-Run on (8 X 2500 MHz CPU s)
-CPU Caches:
-  L1 Data 32K (x4)
-  L1 Instruction 32K (x4)
-  L2 Unified 262K (x4)
-  L3 Unified 6291K (x1)
-Load Average: 1.54, 2.02, 2.53
-***WARNING*** Library was built as DEBUG. Timings may be affected.
 name,iterations,real_time,cpu_time,time_unit,bytes_per_second,items_per_second,label,error_occurred,error_message,"fpr","lbf_size","num_hashes","table_size","target_fpr","tau"
 "MyFixtureLearned/TestBloomFilterStringQuery/0/0",1,5.36337e+09,5.17264e+09,ns,,,,,,10.9974,88628,4,67768,0.05,0.25
 "MyFixtureLearned/TestBloomFilterStringQuery/0/1",1,5.11812e+09,5.09301e+09,ns,,,,,,10.5365,88628,4,67768,0.05,0.275
