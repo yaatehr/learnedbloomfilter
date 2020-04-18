@@ -3,6 +3,8 @@
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
 #define PROJECTED_ELE_COUNT 10848 
+#define COMPOUND_MODEL_SIZE  88628
+#define ARG_LENGTH 30
 
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
 // #ifndef USER_DEBUG_STATEMENTS
@@ -50,19 +52,15 @@ public:
             MyFixtureLearned::valid_index_map = {};
             MyFixtureLearned::invalid_index_map = {};
             MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
-            MyFixtureLearned::tau = linspace(MIN_TAU, MAX_TAU, 29);
+            MyFixtureLearned::tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH - 1);
             MyFixtureLearned::tau.push_back(1); //TODO tau of 1 should circuit break and just return false in the preediction so th eonly false prediction is in the dataset
-            MyFixtureLearned::fpr = linspace(MAX_FPR, MIN_FPR, 30);
+            MyFixtureLearned::fpr = linspace(MAX_FPR, MIN_FPR, ARG_LENGTH);
 
    
             classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
             std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH);
 
-            if(! classifier->hasattr("size_in_bits")) {
-                  throw new std::logic_error("model missing bit size field \n");
-            } else {
-                  compount_model_size = classifier->attr("size_in_bits").toInt();
-            }
+
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "loaded " << key_strings.size() << " urls from dataset" << std::endl;
 #endif
@@ -74,6 +72,8 @@ public:
             std::cout << "fixture setup entered";
 #endif
             filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
+            double t = tau[state.range(1)];
+            filter->set_tau(t);
       }
       void TearDown(const ::benchmark::State &state)
       {
@@ -97,8 +97,6 @@ private:
 
             bloom_filter* gbf = new bloom_filter(parameters);
             std::cout << " Filter size was : " << gbf->size() << std::endl;
-
-
       }
 };
 
@@ -112,8 +110,6 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
       {
             st.PauseTiming(); // Stop timers. They will not count until they are resumed.
             double numFalsePos = 0.0;
-            double t = tau[st.range(1)];
-            filter->set_tau(t);
 
 
 #ifdef USER_DEBUG_STATEMENTS
@@ -149,9 +145,15 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             // #ifdef USER_DEBUG_STATEMENTS
             // std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
             // #endif
-            st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau", t}});
+            st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
 
       }
+}
+
+static void CustomArguments(benchmark::internal::Benchmark* b) {
+  for (int i = 0; i < ARG_LENGTH; i++)
+    for (int j = 0; j < ARG_LENGTH; j++)
+      b->Args({i, j});
 }
 
 // BENCHMARK(BM_generate_random_string)
@@ -163,7 +165,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 /* BarTest is NOT registered */
 // range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
 // BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
-BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->DenseRange(0, 29,1)->DenseRange(0, 29,1);
+BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Apply(CustomArguments);
 
 
 BENCHMARK_MAIN();

@@ -7,12 +7,12 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1.pt"
+#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_1_container.pt"
+#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2_container.pt"
 #endif
 #ifndef DATASET_PATH
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
@@ -172,9 +172,8 @@ public:
       }
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      torch::Tensor out_tensor = classifier->forward(inputs).toTensor();
-      auto accessor = out_tensor.accessor<float, 1>();
-      return accessor[0] > tau;
+      auto out = classifier->forward(inputs).toTensor().data<float>();
+      return *out > tau;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
@@ -459,7 +458,7 @@ private:
       std::cout << "false_pos_probability: " << 1.0 / (float)false_pos_probability << std::endl;
 #endif
 
-      parameters.false_positive_probability = 1.0 / (float)false_pos_probability;
+      parameters.false_positive_probability = false_pos_probability;
       if (!parameters)
       {
          std::cout << "Error - Invalid set of bloom filter parameters!" << std::endl;
