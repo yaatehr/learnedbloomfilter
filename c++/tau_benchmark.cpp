@@ -2,14 +2,14 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 10848 
-#define COMPOUND_MODEL_SIZE  88628
+#define PROJECTED_ELE_COUNT 104907 
+#define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH 30
 
-#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
-// #ifndef USER_DEBUG_STATEMENTS
-// #define USER_DEBUG_STATEMENTS
-// #endif
+#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
+#ifndef USER_DEBUG_STATEMENTS
+#define USER_DEBUG_STATEMENTS
+#endif
 
 #include <iostream>
 #include <string>
@@ -142,9 +142,9 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
             double table_size = (double)MyFixtureLearned::filter->filter->size();
 
-            // #ifdef USER_DEBUG_STATEMENTS
-            // std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
-            // #endif
+            #ifdef USER_DEBUG_STATEMENTS
+            std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
+            #endif
             st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
 
       }
