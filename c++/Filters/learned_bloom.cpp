@@ -155,9 +155,29 @@ public:
                      std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
    {
       tau = 0.5;
-      evaluate_classifier();
       init_generic_bloom(p, f);
    }
+
+
+   LearnedBloomFilter(int p,
+                      float f, 
+                     std::shared_ptr<torch::jit::script::Module> c,
+                     std::shared_ptr<torch::Tensor> x,
+                     std::shared_ptr<torch::Tensor> y,
+                     std::vector<int> v,
+                     std::vector<int> i,
+                     std::vector<std::string> d,
+                     bool evaluate): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
+   {
+      tau = 0.5;
+      if(evaluate) {
+         evaluate_classifier();
+      }
+      init_generic_bloom(p, f);
+   }
+
+
+
 
    ~LearnedBloomFilter() {
          delete filter;
@@ -437,9 +457,9 @@ private:
    void evaluate_classifier()
    {
 
-#ifdef USER_DEBUG_STATEMENTS
+// #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
-#endif
+// #endif
       auto label_accessor = Y->accessor<float, 1>();
       unsigned int num_correct = 0;
       int num_positive_samples = 0;
@@ -462,11 +482,11 @@ private:
          }
       }
 
-#ifdef USER_DEBUG_STATEMENTS
+// #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter classifier accuracy was: " << (float)num_correct / (float)label_accessor.size(0) << std::endl;
       std::cout << "with: " << num_positive_samples << " positive samples" << std::endl;
       std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
-#endif
+// #endif
 }
 
    void init_generic_bloom(int projected_ele_count, float false_pos_probability) {
