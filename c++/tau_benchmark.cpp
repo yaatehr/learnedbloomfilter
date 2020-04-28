@@ -2,7 +2,7 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 10490 
+#define PROJECTED_ELE_COUNT 10490
 #define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH 30
 
@@ -139,7 +139,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
             numFalsePos = MyFixtureLearned::filter->batch_query_count(invalid_tensor_indices, false);
 
-            double fpr = (double) numFalsePos * 100 / (double)(numItems);
+            double exp_fpr = (double) numFalsePos * 100 / (double)(numItems);
             double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
             double table_size = (double)MyFixtureLearned::filter->filter->size();
 
@@ -148,9 +148,17 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "tau: " << tau[st.range(1)] << std::endl;
             std::cout << "lbf_size: " << COMPOUND_MODEL_SIZE << std::endl;
             std::cout << "target fpr: " << MyFixtureLearned::fpr[st.range(0)] << std::endl;
+            //st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
+         
             #endif
-            st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
-            std::cout << "counters inserted" << std::endl;
+            // st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
+            st.counters["fpr"] = exp_fpr;
+            st.counters["num_hashes"] = num_hashes;
+            st.counters["table_size"] = table_size;
+            st.counters["tau"] = tau[st.range(1)];
+            st.counters["lbf_size"] = COMPOUND_MODEL_SIZE;
+            st.counters["target_fpr"] =  MyFixtureLearned::fpr[st.range(0)];
+
       }
 }
 
