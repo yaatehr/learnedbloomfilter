@@ -29,8 +29,6 @@ class MyFixtureLearned : public benchmark::Fixture
 {
 public:
       LearnedBloomFilter *filter;
-      std::map<std::string, std::vector<int>> valid_index_map;
-      std::map<std::string, std::vector<int>> invalid_index_map;
       std::vector<std::string> key_strings;
       std::shared_ptr<torch::Tensor> data;
       std::shared_ptr<torch::Tensor> labels;
@@ -38,7 +36,6 @@ public:
       std::vector<int> invalidIndices;
       std::vector<double> tau;
       std::vector<double> fpr;
-      int compount_model_size;
       std::shared_ptr<torch::jit::script::Module> classifier;
 
       MyFixtureLearned()
@@ -49,8 +46,6 @@ public:
 
 #endif
 
-            MyFixtureLearned::valid_index_map = {};
-            MyFixtureLearned::invalid_index_map = {};
             MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
             MyFixtureLearned::tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH - 1);
             MyFixtureLearned::tau.push_back(1); //TODO tau of 1 should circuit break and just return false in the preediction so th eonly false prediction is in the dataset
