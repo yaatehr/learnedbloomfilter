@@ -141,7 +141,7 @@ public:
       std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH, projected_ele_count);
       tau = 0.5;
       data_strings = load_dataset(DATASET_PATH);
-      evaluate_classifier();
+      //evaluate_classifier();
       init_generic_bloom(projected_ele_count, false_pos_probability);
    }
 
@@ -155,7 +155,7 @@ public:
                      std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
    {
       tau = 0.5;
-      evaluate_classifier();
+      //evaluate_classifier();
       init_generic_bloom(p, f);
    }
 
