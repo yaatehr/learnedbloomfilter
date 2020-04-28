@@ -71,7 +71,8 @@ public:
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture setup entered";
 #endif
-            filter = LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
+            LearnedBloomFilter f(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
+            MyFixtureLearned::filter = f;
             double t = tau[state.range(1)];
             filter.set_tau(t);
       }
