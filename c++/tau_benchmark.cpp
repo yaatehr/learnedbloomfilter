@@ -152,12 +152,12 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
          
             #endif
             // st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
-            st.counters["fpr"] = (double) exp_fpr;
-            st.counters["num_hashes"] = num_hashes;
-            st.counters["table_size"] = (double) table_size;
-            st.counters["tau"] = (double) round_to_digits(tau[st.range(1)], 3);
-            st.counters["lbf_size"] = COMPOUND_MODEL_SIZE;
-            st.counters["target_fpr"] =  MyFixtureLearned::fpr[st.range(0)];
+            st.counters["fpr"] = std::move(exp_fpr);
+            st.counters["num_hashes"] = std::move(num_hashes);
+            st.counters["table_size"] = std::move(table_size);
+            st.counters["tau"] = std::move(round_to_digits(tau[st.range(1)], 3));
+            st.counters["lbf_size"] = std::move(COMPOUND_MODEL_SIZE);
+            st.counters["target_fpr"] =  std::move(MyFixtureLearned::fpr[st.range(0)]);
 
       }
 }

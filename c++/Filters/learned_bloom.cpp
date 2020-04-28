@@ -475,7 +475,7 @@ private:
          return;
       }
       parameters.compute_optimal_parameters();
-      filter = new bloom_filter(parameters);
+      filter = new bloom_filter(parameters);//TODO memory leak check, make sure filter is destructed
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter init complete~!" << std::endl;
 #endif
