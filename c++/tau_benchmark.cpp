@@ -28,7 +28,7 @@
 class MyFixtureLearned : public benchmark::Fixture
 {
 public:
-      LearnedBloomFilter *filter;
+      LearnedBloomFilter filter;
       std::map<std::string, std::vector<int>> valid_index_map;
       std::map<std::string, std::vector<int>> invalid_index_map;
       std::vector<std::string> key_strings;
@@ -71,16 +71,16 @@ public:
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture setup entered";
 #endif
-            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
+            filter = LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
             double t = tau[state.range(1)];
-            filter->set_tau(t);
+            filter.set_tau(t);
       }
       void TearDown(const ::benchmark::State &state)
       {
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture teardown entered";
 #endif
-            delete filter;
+            // delete filter;
       }
 private:
       void sanityCheck() {
@@ -125,23 +125,23 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "getting tensor indices from map" << std::endl;
             // std::cout << MyFixtureLearned::valid_index_map << std::endl;
 #endif
-            auto valid_tensor_indices = MyFixtureLearned::filter->validIndices;
-            auto invalid_tensor_indices = MyFixtureLearned::filter->invalidIndices;
+            auto valid_tensor_indices = MyFixtureLearned::filter.validIndices;
+            auto invalid_tensor_indices = MyFixtureLearned::filter.invalidIndices;
 
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "inserting valid indices into compound model" << std::endl;
 #endif
             // insert all valid tensors an strings
-            MyFixtureLearned::filter->insert(valid_tensor_indices);
+            MyFixtureLearned::filter.insert(valid_tensor_indices);
 
             st.ResumeTiming();
             // query all invalid tensors and strings
 
-            numFalsePos = MyFixtureLearned::filter->batch_query_count(invalid_tensor_indices, false);
+            numFalsePos = MyFixtureLearned::filter.batch_query_count(invalid_tensor_indices, false);
 
             double exp_fpr = round_to_digits((double) numFalsePos * 100 / (double)(numItems), 3);
-            double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
-            double table_size = (double)MyFixtureLearned::filter->filter->size();
+            double num_hashes = (double)MyFixtureLearned::filter.filter->hash_count();
+            double table_size = (double)MyFixtureLearned::filter.filter->size();
 
             #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fpr: " << exp_fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
