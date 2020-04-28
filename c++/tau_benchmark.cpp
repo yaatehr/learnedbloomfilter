@@ -125,7 +125,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "getting tensor indices from map" << std::endl;
             // std::cout << MyFixtureLearned::valid_index_map << std::endl;
 #endif
-            auto valid_tensor_indices = select_random_tensor_subset(MyFixtureLearned::filter->validIndices, PROJECTED_ELE_COUNT);
+            auto valid_tensor_indices = MyFixtureLearned::filter->validIndices;
             auto invalid_tensor_indices = MyFixtureLearned::filter->invalidIndices;
 
 #ifdef USER_DEBUG_STATEMENTS
