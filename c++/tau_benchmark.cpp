@@ -7,9 +7,9 @@
 #define ARG_LENGTH 15
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
-#ifndef USER_DEBUG_STATEMENTS
-#define USER_DEBUG_STATEMENTS
-#endif
+// #ifndef USER_DEBUG_STATEMENTS
+// #define USER_DEBUG_STATEMENTS
+// #endif
 
 #include <iostream>
 #include <string>
