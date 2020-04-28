@@ -138,14 +138,21 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
             numFalsePos = MyFixtureLearned::filter->batch_query_count(invalid_tensor_indices, false);
 
-            double fpr = (double) numFalsePos * 100 / (double)(numItems);
+            double exp_fpr = (double) numFalsePos * 100 / (double)(numItems);
             double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
             double table_size = (double)MyFixtureLearned::filter->filter->size();
 
             #ifdef USER_DEBUG_STATEMENTS
-            std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
+            std::cout << "fpr: " << exp_fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
             #endif
-            st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
+            // st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
+            st.counters["fpr"] = exp_fpr;
+            st.counters["num_hashes"] = num_hashes;
+            st.counters["table_size"] = table_size;
+            st.counters["tau"] = tau[st.range(1)];
+            st.counters["lbf_size"] = COMPOUND_MODEL_SIZE;
+            st.counters["target_fpr"] =  MyFixtureLearned::fpr[st.range(0)];
+
 
       }
 }

@@ -1,0 +1,244 @@
+Your Hardware Enablement Stack (HWE) is supported until April 2023.
+Last login: Tue Apr 21 13:12:00 2020 from 192.168.1.4
+yaatehr@ua-tech:~$ cd programs/learnedbloomfilter/c++/build/
+yaatehr@ua-tech:~/programs/learnedbloomfilter/c++/build$ make && valgrind ./bin/learned_b
+make: *** No targets specified and no makefile found.  Stop.
+yaatehr@ua-tech:~/programs/learnedbloomfilter/c++/build$ cmake ../ -DCMAKE_PREFIX_PATH="/home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch" -DCMAKE_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+-- The C compiler identification is GNU 7.5.0
+-- The CXX compiler identification is GNU 7.5.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/g++
+-- Check for working CXX compiler: /usr/bin/g++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found benchmark: /usr/local/lib/libbenchmark.a
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE
+-- Found torch: /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch.so
+-- Check if compiler accepts -pthread
+-- Check if compiler accepts -pthread - yes
+-- Configuring done
+-- Generating done
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_COMPILER
+
+
+-- Build files have been written to: /home/yaatehr/programs/learnedbloomfilter/c++/build
+yaatehr@ua-tech:~/programs/learnedbloomfilter/c++/build$ make && valgrind ./bin/learned_b
+Scanning dependencies of target learned_b
+[ 50%] Building CXX object CMakeFiles/learned_b.dir/tau_benchmark.cpp.o
+In file included from /home/yaatehr/programs/learnedbloomfilter/c++/tau_benchmark.cpp:25:0:
+/home/yaatehr/programs/learnedbloomfilter/c++/Filters/learned_bloom.cpp: In member function ‘bool LearnedBloomFilter::predict(at::Tensor)’:
+/home/yaatehr/programs/learnedbloomfilter/c++/Filters/learned_bloom.cpp:175:69: warning: ‘T* at::Tensor::data() const [with T = float]’ is deprecated: Tensor.data<T>() is deprecated. Please use Tensor.data_ptr<T>() instead. [-Wdeprecated-declarations]
+       auto out = classifier->forward(inputs).toTensor().data<float>();
+                                                                     ^
+In file included from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/ATen/Tensor.h:11:0,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/ATen/Context.h:4,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/ATen/ATen.h:5,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/types.h:3,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader_options.h:4,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/base.h:3,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader/stateful.h:3,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data/dataloader.h:3,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/data.h:3,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/all.h:4,
+                 from /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/torch/csrc/api/include/torch/torch.h:3,
+                 from /home/yaatehr/programs/learnedbloomfilter/c++/Filters/myUtils.cpp:18,
+                 from /home/yaatehr/programs/learnedbloomfilter/c++/tau_benchmark.cpp:24:
+/home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/include/ATen/core/TensorBody.h:323:7: note: declared here
+   T * data() const {
+       ^~~~
+[100%] Linking CXX executable bin/learned_b
+[100%] Built target learned_b
+==21282== Memcheck, a memory error detector
+==21282== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==21282== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==21282== Command: ./bin/learned_b
+==21282==
+fixture init with max num val int: 2147483647
+attempting to load from /home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/validation_set.txt
+attempting to load from /home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/test_set.txt
+==21282== Warning: set address range perms: large range [0x59e43040, 0xb2488410) (undefined)
+==21282== Warning: set address range perms: large range [0x59e43040, 0xb2488410) (defined)
+loaded 157361 positive samples and 157361 negative samples
+loaded 314722 urls from dataset
+The number of inputs is very large. MyFixtureLearned/TestBloomFilterStringQuery will be repeated at least 900 times.
+2020-04-22 22:49:57
+Running ./bin/learned_b
+Run on (8 X 4400 MHz CPU s)
+CPU Caches:
+  L1 Data 32K (x4)
+  L1 Instruction 32K (x4)
+  L2 Unified 256K (x4)
+  L3 Unified 8192K (x1)
+Load Average: 0.52, 0.14, 0.05
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+***WARNING*** Library was built as DEBUG. Timings may be affected.
+fixture setup enteredLearned bloom filter Evaluating classifier on all data
+Learned bloom filter classifier accuracy was: 0.904026
+with: 157361 positive samples
+and: 187472 positive predictions
+projected_ele_count: 10490
+false_pos_probability: 20
+Learned bloom filter init complete~!
+Entering TestBloomFilterStringQuery loop
+top of for loop
+setting numItems
+setting counters
+getting tensor indices from map
+inserting valid indices into compound model
+==21282== Invalid read of size 4
+==21282==    at 0x1A9A16: predict (learned_bloom.cpp:176)
+==21282==    by 0x1A9A16: insert (learned_bloom.cpp:243)
+==21282==    by 0x1A9A16: insert (learned_bloom.cpp:252)
+==21282==    by 0x1A9A16: MyFixtureLearned_TestBloomFilterStringQuery_Benchmark::BenchmarkCase(benchmark::State&) (tau_benchmark.cpp:135)
+==21282==    by 0x1AC76D: benchmark::Fixture::Run(benchmark::State&) (benchmark.h:1066)
+==21282==    by 0x21CC52: benchmark::internal::BenchmarkInstance::Run(unsigned long, int, benchmark::internal::ThreadTimer*, benchmark::internal::ThreadManager*) const (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC2BB: benchmark::internal::(anonymous namespace)::RunInThread(benchmark::internal::BenchmarkInstance const*, unsigned long, int, benchmark::internal::ThreadManager*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FCB41: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoNIterations() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD293: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoOneRepetition(long) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC73F: benchmark::internal::(anonymous namespace)::BenchmarkRunner::BenchmarkRunner(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD658: benchmark::internal::RunBenchmark(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0AC2: benchmark::internal::(anonymous namespace)::RunBenchmarks(std::vector<benchmark::internal::BenchmarkInstance, std::allocator<benchmark::internal::BenchmarkInstance> > const&, benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C137A: benchmark::RunSpecifiedBenchmarks(benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0EC8: benchmark::RunSpecifiedBenchmarks() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1A31BF: main (tau_benchmark.cpp:175)
+==21282==  Address 0x15deb400 is 0 bytes inside a block of size 4 free'd
+==21282==    at 0x4C30D3B: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4E5B61C: c10::TensorImpl::release_resources() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x1AB3E3: reset_ (intrusive_ptr.h:198)
+==21282==    by 0x1AB3E3: ~intrusive_ptr (intrusive_ptr.h:249)
+==21282==    by 0x1AB3E3: ~Tensor (TensorBody.h:75)
+==21282==    by 0x1AB3E3: predict (learned_bloom.cpp:175)
+==21282==    by 0x1AB3E3: insert (learned_bloom.cpp:243)
+==21282==    by 0x1AB3E3: insert (learned_bloom.cpp:252)
+==21282==    by 0x1AB3E3: MyFixtureLearned_TestBloomFilterStringQuery_Benchmark::BenchmarkCase(benchmark::State&) (tau_benchmark.cpp:135)
+==21282==    by 0x1AC76D: benchmark::Fixture::Run(benchmark::State&) (benchmark.h:1066)
+==21282==    by 0x21CC52: benchmark::internal::BenchmarkInstance::Run(unsigned long, int, benchmark::internal::ThreadTimer*, benchmark::internal::ThreadManager*) const (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC2BB: benchmark::internal::(anonymous namespace)::RunInThread(benchmark::internal::BenchmarkInstance const*, unsigned long, int, benchmark::internal::ThreadManager*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FCB41: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoNIterations() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD293: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoOneRepetition(long) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC73F: benchmark::internal::(anonymous namespace)::BenchmarkRunner::BenchmarkRunner(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD658: benchmark::internal::RunBenchmark(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0AC2: benchmark::internal::(anonymous namespace)::RunBenchmarks(std::vector<benchmark::internal::BenchmarkInstance, std::allocator<benchmark::internal::BenchmarkInstance> > const&, benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C137A: benchmark::RunSpecifiedBenchmarks(benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==  Block was alloc'd at
+==21282==    at 0x4C31E76: memalign (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4C31F91: posix_memalign (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4E51D06: c10::alloc_cpu(unsigned long) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x4E54259: c10::DefaultCPUAllocator::allocate(unsigned long) const (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x626B3FA: THStorage_resize (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5E6D3A2: at::native::resize_(at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5E6DB72: c10::detail::wrap_kernel_functor_unboxed_<c10::detail::WrapRuntimeKernelFunctor_<at::Tensor& (*)(at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>), at::Tensor&, c10::guts::typelist::typelist<at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat> > >, at::Tensor& (at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>)>::call(c10::OperatorKernel*, at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFAAC5: at::TensorIterator::compute_shape() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFE608: at::TensorIterator::build() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFEDE2: at::TensorIterator::unary_op(at::Tensor&, at::Tensor const&, bool) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5F47001: at::Tensor& at::native::unary_op_impl_out<at::native::sigmoid_stub>(at::Tensor&, at::Tensor const&, at::native::sigmoid_stub&) [clone .constprop.418] (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x61EB87F: at::TypeDefault::sigmoid_out(at::Tensor&, at::Tensor const&) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==
+Learned bloom filter batch query count
+==21282== Invalid read of size 4
+==21282==    at 0x1AA396: predict (learned_bloom.cpp:176)
+==21282==    by 0x1AA396: query (learned_bloom.cpp:224)
+==21282==    by 0x1AA396: query (learned_bloom.cpp:234)
+==21282==    by 0x1AA396: batch_query_count (learned_bloom.cpp:265)
+==21282==    by 0x1AA396: MyFixtureLearned_TestBloomFilterStringQuery_Benchmark::BenchmarkCase(benchmark::State&) (tau_benchmark.cpp:140)
+==21282==    by 0x1AC76D: benchmark::Fixture::Run(benchmark::State&) (benchmark.h:1066)
+==21282==    by 0x21CC52: benchmark::internal::BenchmarkInstance::Run(unsigned long, int, benchmark::internal::ThreadTimer*, benchmark::internal::ThreadManager*) const (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC2BB: benchmark::internal::(anonymous namespace)::RunInThread(benchmark::internal::BenchmarkInstance const*, unsigned long, int, benchmark::internal::ThreadManager*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FCB41: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoNIterations() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD293: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoOneRepetition(long) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC73F: benchmark::internal::(anonymous namespace)::BenchmarkRunner::BenchmarkRunner(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD658: benchmark::internal::RunBenchmark(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0AC2: benchmark::internal::(anonymous namespace)::RunBenchmarks(std::vector<benchmark::internal::BenchmarkInstance, std::allocator<benchmark::internal::BenchmarkInstance> > const&, benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C137A: benchmark::RunSpecifiedBenchmarks(benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0EC8: benchmark::RunSpecifiedBenchmarks() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1A31BF: main (tau_benchmark.cpp:175)
+==21282==  Address 0x16087ec0 is 0 bytes inside a block of size 4 free'd
+==21282==    at 0x4C30D3B: free (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4E5B61C: c10::TensorImpl::release_resources() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x1AB428: reset_ (intrusive_ptr.h:198)
+==21282==    by 0x1AB428: ~intrusive_ptr (intrusive_ptr.h:249)
+==21282==    by 0x1AB428: ~Tensor (TensorBody.h:75)
+==21282==    by 0x1AB428: predict (learned_bloom.cpp:175)
+==21282==    by 0x1AB428: query (learned_bloom.cpp:224)
+==21282==    by 0x1AB428: query (learned_bloom.cpp:234)
+==21282==    by 0x1AB428: batch_query_count (learned_bloom.cpp:265)
+==21282==    by 0x1AB428: MyFixtureLearned_TestBloomFilterStringQuery_Benchmark::BenchmarkCase(benchmark::State&) (tau_benchmark.cpp:140)
+==21282==    by 0x1AC76D: benchmark::Fixture::Run(benchmark::State&) (benchmark.h:1066)
+==21282==    by 0x21CC52: benchmark::internal::BenchmarkInstance::Run(unsigned long, int, benchmark::internal::ThreadTimer*, benchmark::internal::ThreadManager*) const (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC2BB: benchmark::internal::(anonymous namespace)::RunInThread(benchmark::internal::BenchmarkInstance const*, unsigned long, int, benchmark::internal::ThreadManager*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FCB41: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoNIterations() (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD293: benchmark::internal::(anonymous namespace)::BenchmarkRunner::DoOneRepetition(long) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FC73F: benchmark::internal::(anonymous namespace)::BenchmarkRunner::BenchmarkRunner(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1FD658: benchmark::internal::RunBenchmark(benchmark::internal::BenchmarkInstance const&, std::vector<benchmark::BenchmarkReporter::Run, std::allocator<benchmark::BenchmarkReporter::Run> >*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C0AC2: benchmark::internal::(anonymous namespace)::RunBenchmarks(std::vector<benchmark::internal::BenchmarkInstance, std::allocator<benchmark::internal::BenchmarkInstance> > const&, benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x1C137A: benchmark::RunSpecifiedBenchmarks(benchmark::BenchmarkReporter*, benchmark::BenchmarkReporter*) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==  Block was alloc'd at
+==21282==    at 0x4C31E76: memalign (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4C31F91: posix_memalign (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4E51D06: c10::alloc_cpu(unsigned long) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x4E54259: c10::DefaultCPUAllocator::allocate(unsigned long) const (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x626B3FA: THStorage_resize (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5E6D3A2: at::native::resize_(at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5E6DB72: c10::detail::wrap_kernel_functor_unboxed_<c10::detail::WrapRuntimeKernelFunctor_<at::Tensor& (*)(at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>), at::Tensor&, c10::guts::typelist::typelist<at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat> > >, at::Tensor& (at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>)>::call(c10::OperatorKernel*, at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFAAC5: at::TensorIterator::compute_shape() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFE608: at::TensorIterator::build() (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5EFEDE2: at::TensorIterator::unary_op(at::Tensor&, at::Tensor const&, bool) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x5F47001: at::Tensor& at::native::unary_op_impl_out<at::native::sigmoid_stub>(at::Tensor&, at::Tensor const&, at::native::sigmoid_stub&) [clone .constprop.418] (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==    by 0x61EB87F: at::TypeDefault::sigmoid_out(at::Tensor&, at::Tensor const&) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libtorch_cpu.so)
+==21282==
+Learned bloom filter batch query count returning...
+fpr: 360.114 numhashes: 4 table_size: 65536
+tau: 0.25
+lbf_size: 6812
+target fpr: 0.05
+counters inserted
+**21282** new/new[] failed and should throw an exception, but Valgrind
+**21282**    cannot throw exceptions and so is aborting instead.  Sorry.
+==21282==    at 0x4C2F81C: ??? (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x4C301F5: operator new(unsigned long) (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==21282==    by 0x1D14A0: void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x4E7CFCE: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /home/yaatehr/miniconda3/envs/lbf/lib/python3.7/site-packages/torch/lib/libc10.so)
+==21282==    by 0x20B281: std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, 0ul>(std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&, std::tuple<>&, std::_Index_tuple<0ul>, std::_Index_tuple<>) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20B1F9: std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>(std::piecewise_construct_t, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<>) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20B119: void __gnu_cxx::new_allocator<std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >::construct<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<> >(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>*, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&&, std::tuple<>&&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20B050: void std::allocator_traits<std::allocator<std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > > >::construct<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<> >(std::allocator<std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >&, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>*, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&&, std::tuple<>&&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20AFAC: void std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >::_M_construct_node<std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<> >(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >*, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&&, std::tuple<>&&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20AC61: std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >* std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >::_M_create_node<std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<> >(std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&&, std::tuple<>&&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20A3CE: std::_Rb_tree_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >::_M_emplace_hint_unique<std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>, std::tuple<> >(std::_Rb_tree_const_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> >, std::piecewise_construct_t const&, std::tuple<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&>&&, std::tuple<>&&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+==21282==    by 0x20A01B: std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, benchmark::Counter, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, benchmark::Counter> > >::operator[](std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /home/yaatehr/programs/learnedbloomfilter/c++/build/bin/learned_b)
+fixture teardown entered==21282==
+==21282== HEAP SUMMARY:
+==21282==     in use at exit: 1,515,216,856 bytes in 450,890 blocks
+==21282==   total heap usage: 290,573,642 allocs, 290,122,752 frees, 25,664,548,721 bytes allocated
+==21282==
+==21282== LEAK SUMMARY:
+==21282==    definitely lost: 104 bytes in 1 blocks
+==21282==    indirectly lost: 8,208 bytes in 2 blocks
+==21282==      possibly lost: 70,928 bytes in 5 blocks
+==21282==    still reachable: 1,515,137,616 bytes in 450,882 blocks
+==21282==                       of which reachable via heuristic:
+==21282==                         stdstring          : 12,123,405 bytes in 349,812 blocks
+==21282==         suppressed: 0 bytes in 0 blocks
+==21282== Rerun with --leak-check=full to see details of leaked memory
+==21282==
+==21282== For counts of detected and suppressed errors, rerun with: -v
+==21282== ERROR SUMMARY: 314722 errors from 2 contexts (suppressed: 0 from 0)
+yaatehr@ua-tech:~/programs/learnedbloomfilter/c++/build$
