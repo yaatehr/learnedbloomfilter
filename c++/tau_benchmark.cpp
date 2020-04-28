@@ -21,63 +21,15 @@
 #include <random>
 #include <iterator>
 #include <memory>
+#include <chrono>
+// #include <unistd.h>
+
 #include "Filters/myUtils.cpp"
 #include "Filters/learned_bloom.cpp"
 #include "Filters/bloom_filter.hpp"
 
-class MyFixtureLearned : public benchmark::Fixture
-{
-public:
-      LearnedBloomFilter *filter;
-      std::vector<std::string> key_strings;
-      std::shared_ptr<torch::Tensor> data;
-      std::shared_ptr<torch::Tensor> labels;
-      std::vector<int> validIndices;
-      std::vector<int> invalidIndices;
-      std::vector<double> tau;
-      std::vector<double> fpr;
-      std::shared_ptr<torch::jit::script::Module> classifier;
-
-      MyFixtureLearned()
-      {
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "fixture init";
-            std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
-
-#endif
-
-            MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
-            MyFixtureLearned::tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH - 1);
-            MyFixtureLearned::tau.push_back(1); //TODO tau of 1 should circuit break and just return false in the preediction so th eonly false prediction is in the dataset
-            MyFixtureLearned::fpr = linspace(MAX_FPR, MIN_FPR, ARG_LENGTH);
-
-   
-            classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
-            std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH, PROJECTED_ELE_COUNT);
 
 
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "loaded " << key_strings.size() << " urls from dataset" << std::endl;
-#endif
-      };
-
-      void SetUp(const ::benchmark::State &state)
-      {
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "fixture setup entered";
-#endif
-            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[state.range(0)], classifier, data, labels, validIndices, invalidIndices, key_strings);
-            double t = tau[state.range(1)];
-            filter->set_tau(t);
-      }
-      void TearDown(const ::benchmark::State &state)
-      {
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "fixture teardown entered";
-#endif
-            delete filter;
-      }
-private:
       void sanityCheck() {
             std::cout << " TESTING BF SIZE: " << std::endl;
             bloom_parameters parameters;
@@ -93,18 +45,64 @@ private:
             bloom_filter* gbf = new bloom_filter(parameters);
             std::cout << " Filter size was : " << gbf->size() << std::endl;
       }
-};
 
-BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
-(benchmark::State &st)
+// main function to measure elapsed time of a C++ program 
+// using chrono library
+int main()
 {
+	// auto start = chrono::steady_clock::now();
+
+	// auto end = chrono::steady_clock::now();
+
+	// std::cout << "Elapsed time in nanoseconds : " 
+	// 	<< chrono::duration_cast<chrono::nanoseconds>(end - start).count()
+	// 	<< " ns" << endl;
+
+
+      std::ofstream output_file;
+      output_file.open("timestamp_lstm_1.csv");
+      // write header to file
+      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles,";
+#ifdef USER_DEBUG_STATEMENTS
+            std::cout << "fixture init";
+            std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
+
+#endif
+
+      LearnedBloomFilter *filter;
+      std::vector<std::string> key_strings = load_dataset(DATASET_PATH);
+      std::shared_ptr<torch::Tensor> data;
+      std::shared_ptr<torch::Tensor> labels;
+      std::vector<int> validIndices;
+      std::vector<int> invalidIndices;
+      std::vector<double> tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH - 1);
+      tau.push_back(1);
+      std::vector<double> fpr = linspace(MAX_FPR, MIN_FPR, ARG_LENGTH);
+
+      std::shared_ptr<torch::jit::script::Module> classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
+      std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH, PROJECTED_ELE_COUNT);
+
+
+#ifdef USER_DEBUG_STATEMENTS
+            std::cout << "loaded " << key_strings.size() << " strings from dataset" << std::endl;
+#endif
+
+      for(int i = 0 ; i < ARG_LENGTH; i++) { // tau index
+            for( int j = 0; j < ARG_LENGTH; j++) {// fpr index
+
+
+#ifdef USER_DEBUG_STATEMENTS
+            std::cout << "fixture setup entered";
+#endif
+            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings);
+            double t = tau[i];
+            filter->set_tau(t);
+      
+
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Entering TestBloomFilterStringQuery loop" << std::endl;
 #endif
-      for (auto _ : st)
-      {
-            std::cout << "top of for loop" << std::endl;
-            st.PauseTiming(); // Stop timers. They will not count until they are resumed.
+
             double numFalsePos = 0.0;
 
 
@@ -112,128 +110,43 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "setting numItems " << std::endl;
 #endif
             int numItems = PROJECTED_ELE_COUNT;
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "setting counters " << std::endl;
-#endif
 
-#ifdef USER_DEBUG_STATEMENTS
-            std::cout << "getting tensor indices from map" << std::endl;
-            // std::cout << MyFixtureLearned::valid_index_map << std::endl;
-#endif
-            auto valid_tensor_indices = MyFixtureLearned::filter->validIndices;
-            auto invalid_tensor_indices = MyFixtureLearned::filter->invalidIndices;
+            auto valid_tensor_indices = filter->validIndices;
+            auto invalid_tensor_indices = filter->invalidIndices;
 
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "inserting valid indices into compound model" << std::endl;
 #endif
             // insert all valid tensors an strings
-            MyFixtureLearned::filter->insert(valid_tensor_indices);
+	auto insert_start = std::chrono::steady_clock::now();
+            filter->insert(valid_tensor_indices);
+	auto insert_end = std::chrono::steady_clock::now();
 
-            st.ResumeTiming();
+	auto insert_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start).count();
+
             // query all invalid tensors and strings
+	auto query_start = std::chrono::steady_clock::now();
+            numFalsePos = filter->batch_query_count(invalid_tensor_indices, false);
+	auto query_end = std::chrono::steady_clock::now();
 
-            numFalsePos = MyFixtureLearned::filter->batch_query_count(invalid_tensor_indices, false);
+      	auto query_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(query_end - query_start).count();
+            double exp_fpr = round_to_digits((double) numFalsePos * 100 / (double)(numItems), 5);
+            int num_hashes = filter->filter->hash_count();
+            long table_size = filter->filter->size();
 
-            double exp_fpr = round_to_digits((double) numFalsePos * 100 / (double)(numItems), 3);
-            double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
-            double table_size = (double)MyFixtureLearned::filter->filter->size();
+            output_file << exp_fpr  << "," << num_hashes << "," << table_size  << ",";
+            output_file << tau[i] <<  ",";
+            output_file << COMPOUND_MODEL_SIZE << ",";
+            output_file << fpr[j] << "," << insert_timing_ns << "," << query_timing_ns << "\n";
 
-            #ifdef USER_DEBUG_STATEMENTS
-            std::cout << "fpr: " << exp_fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
-            std::cout << "tau: " << tau[st.range(1)] << std::endl;
-            std::cout << "lbf_size: " << COMPOUND_MODEL_SIZE << std::endl;
-            std::cout << "target fpr: " << MyFixtureLearned::fpr[st.range(0)] << std::endl;
-            //st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
-         
-            std::cout << std::move(exp_fpr) << std::endl;
-            std::cout << std::move(num_hashes) << std::endl;
-            std::cout << std::move(table_size) << std::endl;
-            std::cout << std::move(round_to_digits(tau[st.range(1)], 3)) << std::endl;;
-            std::cout << std::move(COMPOUND_MODEL_SIZE) << std::endl;;
-            std::cout << std::move(MyFixtureLearned::fpr[st.range(0)]) << std::endl;
+#ifdef USER_DEBUG_STATEMENTS
+            std::cout << "fixture teardown entered";
+#endif
+            delete filter;
 
-            #endif
-    
-            // st.counters["fpr"] = std::move(exp_fpr);
-            // st.counters["num_hashes"] = std::move(num_hashes);
-            // st.counters["table_size"] = std::move(table_size);
-            // st.counters["tau"] = std::move(round_to_digits(tau[st.range(1)], 3));
-            // st.counters["lbf_size"] = std::move(COMPOUND_MODEL_SIZE);
-            // st.counters["target_fpr"] =  std::move(MyFixtureLearned::fpr[st.range(0)]);
-
-            // st.counters[std::string("fpr")] = std::move(exp_fpr);
-            // st.counters[std::string("num_hashes")] = std::move(num_hashes);
-            // st.counters[std::string("table_size")] = std::move(table_size);
-            // st.counters[std::string("tau")] = std::move(round_to_digits(tau[st.range(1)], 3));
-            // st.counters[std::string("lbf_size")] = std::move((double)COMPOUND_MODEL_SIZE);
-            // st.counters[std::string("target_fpr")] =  std::move(round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3));
-            double rounded_tau = round_to_digits(tau[st.range(1)], 3);
-            // st.counters[std::string("fpr")] = exp_fpr;
-            // st.counters[std::string("num_hashes")] = num_hashes;
-            // st.counters[std::string("table_size")] = table_size;
-            // st.counters[std::string("tau")] = round_to_digits(tau[st.range(1)], 3);
-            // st.counters.insert({{std::string("fpr"), exp_fpr}, {std::string("table_size"), table_size}, {std::string("tau"), rounded_tau}});
-            try {
-                  st.counters.insert({{std::string("fpr"), 1.0}, {std::string("table_size"), 1.0}, {std::string("tau"), 1.0}, {std::string("counter_4"), 1.0}, {std::string("counter_5"), 1.0}, {std::string("counter_6"), 1.0} });
-             } catch (const c10::Error &e){
-                   std::cout << "failed at the c++ 11 isnert" << std::endl;
-             }
-            try {
-                  st.counters["1"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 1" << std::endl;
-             }
-            try {
-                  st.counters["2"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 2" << std::endl;
-             }
-                         try {
-                  st.counters["3"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 3" << std::endl;
-             }
-                         try {
-                  st.counters["4"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 4" << std::endl;
-             }
-                         try {
-                  st.counters["5"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 5" << std::endl;
-             }
-                         try {
-                  st.counters["6"] = 1.0;
-             } catch (const c10::Error &e){
-                   std::cout << "failed at std insert 6" << std::endl;
-             }
-
-            // st.counters[std::string("lbf_size")] = (double)COMPOUND_MODEL_SIZE;
-            // st.counters[std::string("target_fpr")] =  round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3);
-
+            }
       }
-}
+      output_file.close();
 
-static void CustomArguments(benchmark::internal::Benchmark* b) {
-  for (int i = 0; i < ARG_LENGTH; i++)
-    for (int j = 0; j < ARG_LENGTH; j++)
-      b->Args({i, j});
-}
-
-// BENCHMARK(BM_generate_random_string)
-//     ->Ranges({{8, 8 << 10}, {10, 100}});
-
-// BENCHMARK(BM_compute_optimal_params)
-//    ->Ranges({{2, 2 << 10}, {1000, 1000000}});
-
-/* BarTest is NOT registered */
-// range {false positive rate^-1, num_projected eles, number of eles for testing fixture, ele length in characters}
-// BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Ranges({{2, 2 << 10}, {50, 1000000}, {8, 8 << 10}});
-BENCHMARK_REGISTER_F(MyFixtureLearned, TestBloomFilterStringQuery)->Apply(CustomArguments);
-
-
-BENCHMARK_MAIN();
-
-
+};
 
