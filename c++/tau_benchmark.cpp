@@ -4,7 +4,7 @@
 #define MAX_FPR 0.05
 #define PROJECTED_ELE_COUNT 1049
 #define COMPOUND_MODEL_SIZE  6812
-#define ARG_LENGTH 30
+#define ARG_LENGTH 15
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 #ifndef USER_DEBUG_STATEMENTS
@@ -141,7 +141,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
             double exp_fpr = round_to_digits((double) numFalsePos * 100 / (double)(numItems), 3);
             double num_hashes = (double)MyFixtureLearned::filter->filter->hash_count();
-            long table_size = (long)MyFixtureLearned::filter->filter->size();
+            double table_size = (double)MyFixtureLearned::filter->filter->size();
 
             #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fpr: " << exp_fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
@@ -170,8 +170,8 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             st.counters[std::string("num_hashes")] = std::move(num_hashes);
             st.counters[std::string("table_size")] = std::move(table_size);
             st.counters[std::string("tau")] = std::move(round_to_digits(tau[st.range(1)], 3));
-            st.counters[std::string("lbf_size")] = std::move(COMPOUND_MODEL_SIZE);
-            st.counters[std::string("target_fpr")] =  std::move(MyFixtureLearned::fpr[st.range(0)]);
+            st.counters[std::string("lbf_size")] = std::move((double)COMPOUND_MODEL_SIZE);
+            st.counters[std::string("target_fpr")] =  std::move(round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3));
 
       }
 }
