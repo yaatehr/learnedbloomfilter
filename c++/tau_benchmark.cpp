@@ -172,11 +172,12 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             // st.counters[std::string("tau")] = std::move(round_to_digits(tau[st.range(1)], 3));
             // st.counters[std::string("lbf_size")] = std::move((double)COMPOUND_MODEL_SIZE);
             // st.counters[std::string("target_fpr")] =  std::move(round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3));
-            
-            st.counters[std::string("fpr")] = exp_fpr;
+            double rounded_tau = round_to_digits(tau[st.range(1)], 3);
+            // st.counters[std::string("fpr")] = exp_fpr;
             // st.counters[std::string("num_hashes")] = num_hashes;
-            st.counters[std::string("table_size")] = table_size;
-            st.counters[std::string("tau")] = round_to_digits(tau[st.range(1)], 3);
+            // st.counters[std::string("table_size")] = table_size;
+            // st.counters[std::string("tau")] = round_to_digits(tau[st.range(1)], 3);
+            st.counters.insert({{std::string("fpr"), exp_fpr}, {std::string("table_size"), table_size}, {std::string("tau"), rounded_tau}});
             // st.counters[std::string("lbf_size")] = (double)COMPOUND_MODEL_SIZE;
             // st.counters[std::string("target_fpr")] =  round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3);
 
