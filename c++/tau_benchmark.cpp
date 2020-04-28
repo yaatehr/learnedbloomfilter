@@ -177,7 +177,43 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             // st.counters[std::string("num_hashes")] = num_hashes;
             // st.counters[std::string("table_size")] = table_size;
             // st.counters[std::string("tau")] = round_to_digits(tau[st.range(1)], 3);
-            st.counters.insert({{std::string("fpr"), exp_fpr}, {std::string("table_size"), table_size}, {std::string("tau"), rounded_tau}});
+            // st.counters.insert({{std::string("fpr"), exp_fpr}, {std::string("table_size"), table_size}, {std::string("tau"), rounded_tau}});
+            try {
+                  st.counters.insert({{std::string("fpr"), 1.0}, {std::string("table_size"), 1.0}, {std::string("tau"), 1.0}, {std::string("counter_4"), 1.0}, {std::string("counter_5"), 1.0}, {std::string("counter_6"), 1.0} });
+             } catch (const c10::Error &e){
+                   std::cout << "failed at the c++ 11 isnert" << std::endl;
+             }
+            try {
+                  st.counters["1"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 1" << std::endl;
+             }
+            try {
+                  st.counters["2"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 2" << std::endl;
+             }
+                         try {
+                  st.counters["3"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 3" << std::endl;
+             }
+                         try {
+                  st.counters["4"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 4" << std::endl;
+             }
+                         try {
+                  st.counters["5"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 5" << std::endl;
+             }
+                         try {
+                  st.counters["6"] = 1.0;
+             } catch (const c10::Error &e){
+                   std::cout << "failed at std insert 6" << std::endl;
+             }
+
             // st.counters[std::string("lbf_size")] = (double)COMPOUND_MODEL_SIZE;
             // st.counters[std::string("target_fpr")] =  round_to_digits(MyFixtureLearned::fpr[st.range(0)], 3);
 
