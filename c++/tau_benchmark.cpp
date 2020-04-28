@@ -2,7 +2,7 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 1049
+#define PROJECTED_ELE_COUNT 10
 #define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH 15
 
