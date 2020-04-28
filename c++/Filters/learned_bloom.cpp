@@ -49,7 +49,7 @@ public:
    static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
                      std::shared_ptr<torch::Tensor> /*labels*/,
                      std::vector<int> /*validIndices*/,
-                     std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path) {
+                     std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path, int max_num_eles) {
       try
       {
           torch::jit::script::Module container = torch::jit::load(DATA_PATH);
@@ -82,6 +82,16 @@ public:
                invalidIndices.push_back(counter);
             }
             counter++;
+         }
+         if(max_num_eles > 0) {
+            validIndices = select_random_vector_subset(validIndices, max_num_eles);
+            invalidIndices = select_random_vector_subset(invalidIndices, max_num_eles);
+            std::vector<int> allIndices;
+            allIndices.insert(allIndices.end(), validIndices.begin(), validIndices.end());
+            allIndices.insert(allIndices.end(), invalidIndices.begin(), invalidIndices.end());
+
+            X = std::make_shared<torch::Tensor>(select_tensor_subset(a, allIndices, max_num_eles*2));
+            Y = std::make_shared<torch::Tensor>(select_tensor_subset(b, allIndices, max_num_eles*2));
          }
 #ifdef USER_DEBUG_STATEMENTS
          std::cout << "loaded " << validIndices.size() << " positive samples and " << invalidIndices.size() << " negative samples" << std::endl;
@@ -128,7 +138,7 @@ public:
          std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
       classifier = load_classifier(MODEL_PATH);
-      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
+      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH, projected_ele_count);
       tau = 0.5;
       data_strings = load_dataset(DATASET_PATH);
       evaluate_classifier();

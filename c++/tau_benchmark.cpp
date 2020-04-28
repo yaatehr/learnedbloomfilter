@@ -2,7 +2,7 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 10490
+#define PROJECTED_ELE_COUNT 1049
 #define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH 30
 
@@ -58,7 +58,7 @@ public:
 
    
             classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
-            std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH);
+            std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH, PROJECTED_ELE_COUNT);
 
 
 #ifdef USER_DEBUG_STATEMENTS
@@ -125,7 +125,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
             std::cout << "getting tensor indices from map" << std::endl;
             // std::cout << MyFixtureLearned::valid_index_map << std::endl;
 #endif
-            auto valid_tensor_indices = MyFixtureLearned::filter->validIndices;
+            auto valid_tensor_indices = select_random_tensor_subset(MyFixtureLearned::filter->validIndices, PROJECTED_ELE_COUNT);
             auto invalid_tensor_indices = MyFixtureLearned::filter->invalidIndices;
 
 #ifdef USER_DEBUG_STATEMENTS

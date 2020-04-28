@@ -205,8 +205,10 @@ torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_v
    return output;
 }
 
-torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
+torch::Tensor select_random_tensor_subset(torch::Tensor data, int desired_num_eles)
 {
+   std::vector<int> index_vec(data.accessor<float, 2>.size(0));
+   std::iota(index_vec.begin(), index_vec.end(), 0);
    std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
    return select_tensor_subset(data, indices, desired_num_eles);
 }
