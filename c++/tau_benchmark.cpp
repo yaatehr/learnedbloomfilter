@@ -2,7 +2,7 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 104907 
+#define PROJECTED_ELE_COUNT 10490 
 #define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH 30
 
@@ -108,6 +108,7 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 #endif
       for (auto _ : st)
       {
+            std::cout << "top of for loop" << std::endl;
             st.PauseTiming(); // Stop timers. They will not count until they are resumed.
             double numFalsePos = 0.0;
 
@@ -144,9 +145,12 @@ BENCHMARK_DEFINE_F(MyFixtureLearned, TestBloomFilterStringQuery)
 
             #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fpr: " << fpr << " numhashes: " << num_hashes << " table_size: " << table_size << std::endl;
+            std::cout << "tau: " << tau[st.range(1)] << std::endl;
+            std::cout << "lbf_size: " << COMPOUND_MODEL_SIZE << std::endl;
+            std::cout << "target fpr: " << MyFixtureLearned::fpr[st.range(0)] << std::endl;
             #endif
             st.counters.insert({{"fpr", fpr}, {"num_hashes", num_hashes}, {"table_size", table_size}, {"tau",  tau[st.range(1)]}, {"lbf_size", COMPOUND_MODEL_SIZE}, {"target_fpr", MyFixtureLearned::fpr[st.range(0)]}});
-
+            std::cout << "counters inserted" << std::endl;
       }
 }
 
