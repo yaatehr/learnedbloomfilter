@@ -296,8 +296,15 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
   return linspaced;
 }
 
+template<typename T>
+T round_to_digits(T value, int digits)
+{
+    if (value == 0.0) // otherwise it will return 'nan' due to the log10() of zero
+        return (T) 0.0;
 
-
+    double factor =  pow(10.0, digits - ceil(log10(fabs(value))));
+    return (T) round(value * factor) / factor;   
+}
 
 
 // int main()

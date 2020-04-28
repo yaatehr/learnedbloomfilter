@@ -7,15 +7,15 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/timestamp_lstm_1.pt"
+#define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/timestamp_lstm_1.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/timestamp_lstm_1_container.pt"
+#define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/timestamp_lstm_1_container.pt"
 #endif
 #ifndef DATASET_PATH
-#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
+#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 #endif
 
 #include <iostream>
@@ -172,8 +172,8 @@ public:
       }
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      auto out = classifier->forward(inputs).toTensor().data<float>();
-      return *out > tau;
+      float out = classifier->forward(inputs).toTensor().item().to<float>();
+      return out > tau;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
