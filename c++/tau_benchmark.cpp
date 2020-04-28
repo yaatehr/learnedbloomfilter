@@ -62,7 +62,7 @@ int main()
       std::ofstream output_file;
       output_file.open("timestamp_lstm_1.csv");
       // write header to file
-      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles,";
+      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles\n";
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture init";
             std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
@@ -130,9 +130,9 @@ int main()
 	auto query_end = std::chrono::steady_clock::now();
 
       	auto query_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(query_end - query_start).count();
-            double exp_fpr = round_to_digits((double) numFalsePos * 100 / (double)(numItems), 5);
-            int num_hashes = filter->filter->hash_count();
-            long table_size = filter->filter->size();
+            double exp_fpr = (double) numFalsePos * 100 / (double)(numItems);
+            auto num_hashes = filter->filter->hash_count();
+            auto table_size = filter->filter->size();
 
             output_file << exp_fpr  << "," << num_hashes << "," << table_size  << ",";
             output_file << tau[i] <<  ",";
