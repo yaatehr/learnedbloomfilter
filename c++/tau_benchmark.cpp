@@ -2,9 +2,9 @@
 #define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 10
+#define PROJECTED_ELE_COUNT 104907
 #define COMPOUND_MODEL_SIZE  6812
-#define ARG_LENGTH 15
+#define ARG_LENGTH 30
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 // #ifndef USER_DEBUG_STATEMENTS
@@ -88,6 +88,7 @@ int main()
 #endif
 
       for(int i = 0 ; i < ARG_LENGTH; i++) { // tau index
+            std::cout << "progress bar: " << i << "/" << ARG_LENGTH << std::endl;
             for( int j = 0; j < ARG_LENGTH; j++) {// fpr index
 
 
