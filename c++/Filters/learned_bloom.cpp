@@ -159,6 +159,16 @@ public:
       init_generic_bloom(p, f);
    }
 
+   ~LearnedBloomFilter() {
+         delete filter;
+         // delete classifier;
+         // delete X;
+         // delete Y;
+         // delete validIndices;
+         // delete invalidIndices;
+         // delete data_strings;
+   }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
