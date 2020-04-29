@@ -265,7 +265,7 @@ public:
       std::vector<int> index_vec = {index};
       auto tensor = select_tensor_subset(*X, index_vec, 1);
       auto prediction = predict(tensor);
-      std::cout << "predicted " << prediction <<  " for string " << data_strings[index] << std::endl;
+      // std::cout << "predicted " << prediction <<  " for string " << data_strings[index] << std::endl;
       if(prediction){
          return true;
       } else {
