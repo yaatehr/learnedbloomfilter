@@ -61,7 +61,7 @@ int main()
 
 
       std::ofstream output_file;
-      output_file.open("explicit_lstm_2.csv");
+      output_file.open("timestamp_lstm_2.csv");
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles\n";
 #ifdef USER_DEBUG_STATEMENTS

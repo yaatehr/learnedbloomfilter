@@ -239,6 +239,8 @@ std::vector<std::string> load_dataset(std::string location) {
     std::fstream in(validation_set_location, std::ios::in);
     std::string line;
     std::string key;
+    std::string key_1;
+    std::string key_2;
     std::string label;
    std::vector<std::string> keys;
    std::vector<int> labels; // TODO validate labels and return tup or pointers for these?
@@ -259,8 +261,9 @@ std::vector<std::string> load_dataset(std::string location) {
    std::fstream in2(test_set_location, std::ios::in);
        while (getline(in2, line))
     {
-        std::stringstream s(line);
-        s >> label >> key;
+        std::stringstream s(line);//TODO fix this timestamp hack
+        s >> label >> key_1 >> key_2;
+        key = key_1 + " " + key_2;
                                     // converts string to integer
       labels.push_back(stoi(label));
       keys.push_back(key);
