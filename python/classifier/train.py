@@ -577,7 +577,7 @@ def run(args):
                         round(validation_f1, 4),
                     ),
                 )
-                torch.save(os.path.join(args.root, f"input/dataset/{args.model_name}.pth"))
+                torch.save(model.state_dict(), os.path.join(args.root, f"input/timestamp_dataset/{args.model_name}.pth"))
 
         if bool(args.early_stopping):
             if epoch - best_epoch > args.patience > 0:

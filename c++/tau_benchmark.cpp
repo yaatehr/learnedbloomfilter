@@ -1,13 +1,13 @@
 #define MIN_TAU 0.35
-#define MAX_TAU 0.85
+#define MAX_TAU 0.95
 #define MIN_FPR 0.0001
 #define MAX_FPR 0.05
-#define PROJECTED_ELE_COUNT 50000
+#define PROJECTED_ELE_COUNT 10000
 #define COMPOUND_MODEL_SIZE  6812
-#define ARG_LENGTH_T 10
-#define ARG_LENGTH_F 20
+#define ARG_LENGTH_T 20
+#define ARG_LENGTH_F 30
 
-#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
+#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/dataset"
 // #ifndef USER_DEBUG_STATEMENTS
 // #define USER_DEBUG_STATEMENTS
 // #endif
@@ -61,7 +61,7 @@ int main()
 
 
       std::ofstream output_file;
-      output_file.open("timestamp_lstm_1.csv");
+      output_file.open("explicit_lstm_2.csv");
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles\n";
 #ifdef USER_DEBUG_STATEMENTS

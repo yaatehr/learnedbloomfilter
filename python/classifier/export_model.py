@@ -88,8 +88,8 @@ def load_lstm(args, model_path):
     return export_model, base_model
 
 def export_lstm(args, export_dataset=True):
-    model_path = os.path.join(args.root, 'python/modelsaves/timestamp_lstm_1.pth')
-    model_save_name = "timestamp_lstm_1"
+    model_path = os.path.join(args.root, 'input/timestamp_dataset/timestamp_lstm.pth')
+    model_save_name = "timestamp_lstm_2"
     model, base_model = load_lstm(args, model_path)
     print("model loaded")
     dataset = data_loader.EncodedStringLabelDataset(args, init_tuple=(["test"]*2000, ["label"]*2000, [0]*2000, None))
@@ -107,7 +107,7 @@ def export_lstm(args, export_dataset=True):
 
     traced_script_module = torch.jit.script(model)
     print("saving model")
-    traced_script_module.save(os.path.join(args.root, "python/modelsaves/%s.pt" % model_save_name))
+    traced_script_module.save(os.path.join(args.root, "input/timestamp_dataset/%s.pt" % model_save_name))
     print("MODEL SAVED!")
 
     if export_dataset:
@@ -150,25 +150,26 @@ def export_lstm(args, export_dataset=True):
         model_size = utils.get_model_size(model, args, input_features=feats)
         total_model_size = model_size + ( 0 if args.use_char_encoding else args.embedding_size_bits)
 
-        optimal_tau_dict = find_optimal_tau_vals(model, test_generator, total_model_size, projected_num_eles=test_set.get_num_positive_samples())
+        # optimal_tau_dict = find_optimal_tau_vals(model, test_generator, total_model_size, projected_num_eles=test_set.get_num_positive_samples())
         # best_tau = list(optimal_tau_dict.values())[0]
+        optimal_tau_dict = {0.8944444444444444: 10.038832323696072, 0.5722222222222222: 9.996783479358006, 0.6527777777777777: 9.996783479358006, 0.25: 9.955567340373515, 0.33055555555555555: 9.955567340373515, 0.4111111111111111: 9.955567340373515, 0.49166666666666664: 9.955567340373515, 0.7333333333333333: 9.955567340373515, 0.8138888888888889: 9.955567340373515, 0.975: 9.955567340373515}
         num_pos_samples = test_set.get_num_positive_samples()
         # print(f"found best tau: {best_tau}")
 
-        total_errors = test_model(base_model, validation_generator) 
-        total_errors += test_model(base_model, test_generator)
-        print("base model had %d errors total" % total_errors)
+        # total_errors = test_model(base_model, validation_generator) 
+        # total_errors += test_model(base_model, test_generator)
+        # print("base model had %d errors total" % total_errors)
 
-        total_errors = test_model(model, validation_generator) 
-        total_errors += test_model(model, test_generator)
-        print("export model had %d errors total" % total_errors)
+        # total_errors = test_model(model, validation_generator) 
+        # total_errors += test_model(model, test_generator)
+        # print("export model had %d errors total" % total_errors)
 
-        total_errors = test_model(traced_script_module, validation_generator) 
-        total_errors += test_model(traced_script_module, test_generator)
-        print("traced_script_module had %d errors total" % total_errors)
+        # total_errors = test_model(traced_script_module, validation_generator) 
+        # total_errors += test_model(traced_script_module, test_generator)
+        # print("traced_script_module had %d errors total" % total_errors)
 
-        tensor_list, label_list = extract_data(validation_set)
-        tensor_list, label_list = extract_data(test_set, tensor_list=tensor_list, label_list=label_list)
+        # tensor_list, label_list = extract_data(validation_set)
+        tensor_list, label_list = extract_data(test_set)
         tensors = torch.stack(tensor_list, dim=0)
         labels = torch.FloatTensor(label_list)
 
@@ -211,7 +212,7 @@ def export_lstm(args, export_dataset=True):
             'model_path': model_path
         }
         export_container = torch.jit.script(container.Container(export_values))
-        export_container.save(os.path.join(args.root, "python/modelsaves/%s_container.pt" % model_save_name))
+        export_container.save(os.path.join(args.root, "input/timestamp_dataset/%s_container.pt" % model_save_name))
         print("container saved successfully")
 
 

@@ -7,15 +7,17 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/timestamp_lstm_1.pt"
+#define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_2.pt"
+// #define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/timestamp_lstm_1_container.pt"
+#define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_1_container.pt"
+// #define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2_container.pt"
 #endif
 #ifndef DATASET_PATH
-#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
+#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/dataset"
 #endif
 
 #include <iostream>

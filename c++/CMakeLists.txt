@@ -5,12 +5,12 @@ project(learned_b VERSION 1.0)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(warnings "-Wall -Wextra ")
+    set(warnings "-Wall -Wextra -D_GLIBCXX_USE_CXX11_ABI=0")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(warnings "/W4 /WX /EHsc")
 endif()
 if (NOT CONFIGURED_ONCE)
-    set(CMAKE_CXX_FLAGS "${warnings}"
+    set(CMAKE_CXX_FLAGS "${warnings} -g"
         CACHE STRING "Flags used by the compiler during all build types." FORCE)
     set(CMAKE_C_FLAGS   "${warnings}"
         CACHE STRING "Flags used by the compiler during all build types." FORCE)
@@ -124,7 +124,7 @@ target_link_libraries(learned_b "${TORCH_LIBRARIES}")
 
 
 # SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}")
-set_property(TARGET learned_b PROPERTY CXX_STANDARD 17)
+set_property(TARGET learned_b PROPERTY CXX_STANDARD 14)
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL
     "A flag showing that CMake has configured at least once.")
 
