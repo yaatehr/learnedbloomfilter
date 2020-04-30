@@ -157,9 +157,12 @@ public:
                      std::shared_ptr<torch::Tensor> y,
                      std::vector<int> v,
                      std::vector<int> i,
-                     std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
+                     std::vector<std::string> d,
+                     std::vector<std::string> t
+                     ): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
    {
       tau = 0.5;
+      evaluate_plaintext_labels();
       evaluate_classifier();
       init_generic_bloom(p, f);
    }
@@ -173,10 +176,14 @@ public:
                      std::vector<int> v,
                      std::vector<int> i,
                      std::vector<std::string> d,
-                     bool evaluate): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
+                     std::vector<std::string> t,
+                     bool evaluate): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
    {
       tau = 0.5;
+
+      std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
       if(evaluate) {
+         evaluate_plaintext_labels();
          evaluate_classifier();
       }
       init_generic_bloom(p, f);
