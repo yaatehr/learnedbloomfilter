@@ -126,8 +126,12 @@ int main()
 	auto insert_start = std::chrono::steady_clock::now();
             filter->insert(valid_tensor_indices);
 	auto insert_end = std::chrono::steady_clock::now();
-
 	auto insert_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start).count();
+
+            auto numFalseNeg = filter->batch_query_count(valid_tensor_indices, true);
+            std::cout << "number of false negatives: " << numFalseNeg << std::endl;
+
+
 
             // query all invalid tensors and strings
 	auto query_start = std::chrono::steady_clock::now();
