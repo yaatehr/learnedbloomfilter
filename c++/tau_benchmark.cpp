@@ -100,7 +100,7 @@ int main()
 #endif
             bool evaluate_filter = (i + j) == 0;// only evaluate on the first run
 
-            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, evaluate_filter, plaintext_labels);
+            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             double t = tau[i];
             filter->set_tau(t);
       
