@@ -232,7 +232,7 @@ std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::str
     return csv;
 }
 
-std::vector<std::string> load_dataset(std::string location) {
+std::tuple<std::vector<int>, std::vector<std::string>> load_dataset(std::string location) {
    std::string test_set_location = location + "/test_set.txt";
    std::string validation_set_location = location + "/validation_set.txt";
 
@@ -269,7 +269,9 @@ std::vector<std::string> load_dataset(std::string location) {
       keys.push_back(key);
     }
 
-    return keys;
+
+      auto output = std::tuple<std::vector<int>, std::vector<std::string>>(labels, keys);
+    return output;
 }
 
 

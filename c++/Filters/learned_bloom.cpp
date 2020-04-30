@@ -46,6 +46,7 @@ public:
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
    std::vector<std::string> data_strings;
+   std::vector<int> plaintext_labels;
    double tau;
 
    static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
@@ -142,7 +143,9 @@ public:
       classifier = load_classifier(MODEL_PATH);
       std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH, projected_ele_count);
       tau = 0.5;
-      data_strings = load_dataset(DATASET_PATH);
+
+      std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
+      evaluate_plaintext_labels();
       //evaluate_classifier();
       init_generic_bloom(projected_ele_count, false_pos_probability);
    }
@@ -492,6 +495,32 @@ private:
       std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
 // #endif
 }
+
+
+bool evaluate_plaintext_labels() {
+   auto a = Y->accessor<float, 1>();
+   auto num_labels = a.size(0);
+   if (num_labels != plaintext_labels.size()) {
+      std::cout << "number of tensor labels: " << num_labels << " number of plaintext labels: " << plaintext_labels.size() << std::endl;
+      return false;
+   } 
+
+   int num_errors = 0;
+
+   for (int i = 0; i < num_labels; i++) {
+      auto label_i = a[i];
+      auto plaintext_label_i  = plaintext_labels[i];
+      if (label_i != plaintext_label_i) { 
+         num_errors++;
+         std::cout << "keystring: " << data_strings[i] << " has plaintext label  " << plaintext_label_i << " and tensor label " << label_i << std::endl;
+      }
+   }
+
+   return num_errors <1;
+
+   }
+
+
 
    void init_generic_bloom(int projected_ele_count, float false_pos_probability) {
             bloom_parameters parameters;

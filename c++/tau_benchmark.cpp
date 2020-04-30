@@ -71,7 +71,9 @@ int main()
 #endif
 
       LearnedBloomFilter *filter;
-      std::vector<std::string> key_strings = load_dataset(DATASET_PATH);
+      std::vector<std::string> key_strings;
+      std::vector<int> plaintext_labels; 
+      std::tie(plaintext_labels, key_strings) = load_dataset(DATASET_PATH);
       std::shared_ptr<torch::Tensor> data;
       std::shared_ptr<torch::Tensor> labels;
       std::vector<int> validIndices;
