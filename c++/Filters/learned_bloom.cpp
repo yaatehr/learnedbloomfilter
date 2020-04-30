@@ -158,7 +158,7 @@ public:
                      std::vector<int> v,
                      std::vector<int> i,
                      std::vector<std::string> d,
-                     std::vector<std::string> t
+                     std::vector<int> t
                      ): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
    {
       tau = 0.5;
@@ -176,7 +176,7 @@ public:
                      std::vector<int> v,
                      std::vector<int> i,
                      std::vector<std::string> d,
-                     std::vector<std::string> t,
+                     std::vector<int> t,
                      bool evaluate): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
    {
       tau = 0.5;
