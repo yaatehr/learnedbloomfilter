@@ -244,18 +244,18 @@ std::tuple<std::vector<int>, std::vector<std::string>> load_dataset(std::string 
     std::string label;
    std::vector<std::string> keys;
    std::vector<int> labels; // TODO validate labels and return tup or pointers for these?
-   std::cout << "attempting to load from " + validation_set_location << std::endl;
+   // std::cout << "attempting to load from " + validation_set_location << std::endl;
 
-    while (getline(in, line))
-    {
-        std::stringstream s(line);
-        s >> label >> key;
-                                    // converts string to integer
-      labels.push_back(stoi(label));
-      keys.push_back(key);
-    }
-    in.close();
-   std::cout << "attempting to load from " << test_set_location << std::endl;
+   //  while (getline(in, line))
+   //  {
+   //      std::stringstream s(line);
+   //      s >> label >> key;
+   //                                  // converts string to integer
+   //    labels.push_back(stoi(label));
+   //    keys.push_back(key);
+   //  }
+   //  in.close();
+   // std::cout << "attempting to load from " << test_set_location << std::endl;
 
 
    std::fstream in2(test_set_location, std::ios::in);
