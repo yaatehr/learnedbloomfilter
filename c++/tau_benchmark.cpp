@@ -49,7 +49,10 @@
 
 // main function to measure elapsed time of a C++ program 
 // using chrono library
-int main()
+// args must be entered in order
+// arg0 - dataset_path
+// arg1 - 
+int main(int argc, char *argv[])
 {
 	// auto start = chrono::steady_clock::now();
 
@@ -58,6 +61,8 @@ int main()
 	// std::cout << "Elapsed time in nanoseconds : " 
 	// 	<< chrono::duration_cast<chrono::nanoseconds>(end - start).count()
 	// 	<< " ns" << endl;
+
+      // std::string dataset_path = argc > 0 : DATASET_PATH ? argv[0];
 
 
       std::ofstream output_file;

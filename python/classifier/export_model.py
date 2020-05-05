@@ -34,6 +34,7 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
     k,m,n,p = bloom_calc.km_from_np(projected_num_eles, target_fpr)
     num_classified_dict = {}
     potential_tau_dict = {}
+    tau_fpr_dict = {}
     for tau in np.linspace(0.25, 0.975, num=num_tau):
         num_properly_classified = 0
         num_false_pos = 0
@@ -63,13 +64,14 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
         fpr = num_false_pos / num_samples
         num_classified_dict[tau] = num_properly_classified
         out = utils.mitzenmacher_theorem(0.6185, fpr, fnr, k, model_size, projected_num_eles) #assuming bits per item is the numebr of hash functions we use
-        potential_tau_dict[tau] = out
+        potential_tau_dict[tau] = (out, fpr)
+
         print(tau, out, fpr, fnr, k, model_size, projected_num_eles)
 
     print(num_classified_dict)
     # print(potential_tau_dict)
 
-    valid_tau = {k: v for k, v in sorted(potential_tau_dict.items(), key=lambda item: item[1], reverse=True) if v > 0}
+    valid_tau = {k: v for k, v in sorted(potential_tau_dict.items(), key=lambda item: item[1][0], reverse=True) if v > 0}
     print(valid_tau)
     # if len(valid_tau) == 0:
     #     raise Exception("No valid tau values were found, this classifier will notb beat aout a generic bloom filter")
@@ -150,11 +152,10 @@ def export_lstm(args, export_dataset=True):
         model_size = utils.get_model_size(model, args, input_features=feats)
         total_model_size = model_size + ( 0 if args.use_char_encoding else args.embedding_size_bits)
 
-        # optimal_tau_dict = find_optimal_tau_vals(model, test_generator, total_model_size, projected_num_eles=test_set.get_num_positive_samples())
-        # best_tau = list(optimal_tau_dict.values())[0]
-        optimal_tau_dict = {0.8944444444444444: 10.038832323696072, 0.5722222222222222: 9.996783479358006, 0.6527777777777777: 9.996783479358006, 0.25: 9.955567340373515, 0.33055555555555555: 9.955567340373515, 0.4111111111111111: 9.955567340373515, 0.49166666666666664: 9.955567340373515, 0.7333333333333333: 9.955567340373515, 0.8138888888888889: 9.955567340373515, 0.975: 9.955567340373515}
+        optimal_tau_dict = find_optimal_tau_vals(model, test_generator, total_model_size, projected_num_eles=test_set.get_num_positive_samples())
+        best_tau = list(optimal_tau_dict.values())[0]
         num_pos_samples = test_set.get_num_positive_samples()
-        # print(f"found best tau: {best_tau}")
+        print(f"found best tau: {best_tau[0]} with fpr: {best_tau[1]}")
 
         # total_errors = test_model(base_model, validation_generator) 
         # total_errors += test_model(base_model, test_generator)
@@ -179,6 +180,11 @@ def export_lstm(args, export_dataset=True):
 
         data_root = os.path.dirname(dataset_path)
 
+        with open(os.path.join(data_root, "tau_fpr.txt"), "w") as metadata_file:
+            for k,v in optimal_tau_dict.items():
+                metadata_file.write(f"{k} {v[0]} {v[1]}\n")
+            metadata_file.flush()
+
         with open(os.path.join(data_root, "metadata.txt"), "w") as metadata_file:
             metadata_file.write("="*25 + " Model Metadata " + "="*25 + "\n")
             metadata_file.write(f"""
@@ -190,7 +196,7 @@ def export_lstm(args, export_dataset=True):
 
             metadata_file.write("="*25 + " Tau Thresholds " + "="*25 + "\n")
             for k,v in optimal_tau_dict.items():
-                metadata_file.write(f"Tau: {k} - {v}\n")
+                metadata_file.write(f"Tau: {k} - {v[0]}\n")
 
             metadata_file.write("="*25 + " Args " + "="*25 + "\n")
             for k,v in args.__dict__.items():
