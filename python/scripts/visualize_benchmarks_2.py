@@ -9,12 +9,16 @@ import os
 round_to_n = lambda x, n: round(x, -int(floor(log10(abs(x)))) + (n - 1))
 
 # test_name = "explicit_always_false"
-test_name = "explicit_lstm_2"
-fixture_data = pd.read_csv(f"{test_name}_normalized.csv", index_col=False)
+test_name = "timestamp_lstm_2"
+fixture_data = pd.read_csv(f"../../input/{test_name}.csv", index_col=False)
 
 fixture_data["compound_size"] = fixture_data["table_size"] + fixture_data["lbf_size"]
-# columns = ["function", "projected_eles", "inv_max_fpr", "actual_fpr", "num_hashes", "table_size", "batch_size", "len_gen_eles", "iterations", "real_time", "cpu_time"]
-columns = ["function", "actual_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size"]
+fixture_data["ns_per_insert"] = fixture_data["insert_time"]/fixture_data.head(0)["num_eles"] #TODO fix, these do not work
+fixture_data["ns_per_query"] = fixture_data["query_time"]/fixture_data.head(0)["num_eles"] #TODO fix, these do not work
+
+# columns = ["function", "projected_eles", "inv_max_fpr", "empirical_fpr", "num_hashes", "table_size", "batch_size", "len_gen_eles", "iterations", "real_time", "cpu_time"]
+columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles"]
+
 fixture_data = fixture_data[columns]
 
 print(fixture_data.head(10))
@@ -50,8 +54,8 @@ for ind, query in enumerate(queries):
     for group1_label, group1 in query.groupby("tau"):
         g = group1.sort_values("compound_size")
         fig, ax = plt.subplots()
-        ax.plot(g.compound_size, g.actual_fpr, marker='.', linestyle='-', label=group1_label, color="b")
-        ax.plot(gbf_data.table_size, gbf_data.actual_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
+        ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+        ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
         ax.legend()
         ax.title.set_text("%s, tau: %d" % (test_name, group1_label))
         ax.set_ylabel("Empirical FPR")
@@ -63,8 +67,8 @@ for ind, query in enumerate(queries):
     for group1_label, group1 in query.groupby("tau"):
         g = group1.sort_values("compound_size")
         fig, ax = plt.subplots()
-        ax.plot(g.compound_size, g.actual_fpr, marker='.', linestyle='-', label=group1_label, color="b")
-        ax.plot(gbf_data.table_size, gbf_data.actual_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
+        ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+        ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
         ax.legend()
         ax.title.set_text("%s, tau: %d" % (test_name, group1_label))
         ax.set_ylabel("Empirical FPR")
