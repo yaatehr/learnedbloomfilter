@@ -17,7 +17,7 @@ class LSTMBasic(nn.Module):
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
         self.embedding_size = (
-            args.number_of_characters + len(args.extra_characters)
+            (args.number_of_characters + len(args.extra_characters))*args.max_length
             if args.use_char_encoding
             else args.embedding_size * args.max_length
         )
@@ -87,13 +87,15 @@ class LSTMBasicX(nn.Module):
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
         self.embedding_size = (
-            args.number_of_characters + len(args.extra_characters)
+            (args.number_of_characters + len(args.extra_characters))*args.max_length
             if args.use_char_encoding
             else args.embedding_size * args.max_length
         )
+        self.tau = args.tau
+
 
         self.hidden = self.init_hidden()
-        self.projected_input_shape = (1, 1, args.max_length*args.embedding_size)
+        self.projected_input_shape = (1, 1, self.embedding_size) 
 
         self.lstm = nn.LSTM(
             self.embedding_size,

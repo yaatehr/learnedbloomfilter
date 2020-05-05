@@ -13,7 +13,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import DataLoader, WeightedRandomSampler, SubsetRandomSampler
 from tensorboardX import SummaryWriter
 
 from data_intake import data_loader
@@ -27,7 +27,7 @@ import gc
 
 
 def export_train_val_test(training_set, validation_set, test_set):
-    dir_path = os.path.join(training_set.args.root, "input/dataset")
+    dir_path = os.path.join(training_set.args.root, "input/timestamp_dataset")
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     with open(os.path.join(dir_path, "training_set.txt"), 'w') as train_file:
@@ -361,12 +361,15 @@ def run(args):
     #     ) = pickle.load(open(cached_data_path, "rb"))
     #     print("loaded cached training data")
 
-    dataset_path = os.path.join(args.root, "input/dataset/train_val_test.pkl")
+    dataset_path = os.path.join(args.root, "input/timestamp_dataset/train_val_test.pkl")
     if not os.path.exists(dataset_path):
-        urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
-        with open(urls_by_category_path, 'rb') as fp:
-            urls_by_category = pickle.load(fp)
-        training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+        # urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
+        # with open(urls_by_category_path, 'rb') as fp:
+        #     urls_by_category = pickle.load(fp)
+        texts, labels, tokens, _, _ = data_loader.load_data(args)
+        string_labels = [str(x) for x in labels]
+
+        training_set = data_loader.EncodedStringLabelDataset(args, init_tuple=(texts, string_labels, labels, None))
         init_tuple = training_set.split_train_val()
         validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
         init_tuple = training_set.split_train_val(split_size=.2222222)
@@ -382,10 +385,10 @@ def run(args):
             print("loaded val set: ", validation_set.counter)
             print("loaded test set: ", test_set.counter)
         except:
-            urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
-            with open(urls_by_category_path, 'rb') as fp:
-                urls_by_category = pickle.load(fp)
-            training_set = data_loader.EncodedStringLabelDataset(args, urls_by_category=urls_by_category)
+            texts, labels, tokens, _, _ = data_loader.load_data(args)
+            string_labels = [str(x) for x in labels]
+
+            training_set = data_loader.EncodedStringLabelDataset(args, init_tuple=(texts, string_labels, labels, None))
             init_tuple = training_set.split_train_val()
             validation_set = data_loader.EncodedStringLabelDataset(args, init_tuple=init_tuple)
             init_tuple = training_set.split_train_val(split_size=.2222222)
@@ -395,15 +398,13 @@ def run(args):
             test_set.select_subset(balanceWeights=True)
             export_train_val_test(training_set, validation_set, test_set)
 
+    # if bool(args.use_sampler):
+    #     # train_sample_weights = torch.from_numpy(train_sample_weights)
+    #     train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size,), replace=False)) 
 
-    if bool(args.use_sampler):
-        train_sample_weights = torch.from_numpy(train_sample_weights)
-        sampler = WeightedRandomSampler(
-            train_sample_weights.type("torch.DoubleTensor"),
-            len(train_sample_weights),
-        )
-        training_params["sampler"] = sampler
-        training_params["shuffle"] = False
+    #     sampler = SubsetRandomSampler()
+    #     training_params["sampler"] = sampler
+    #     training_params["shuffle"] = False
 
     training_generator = DataLoader(training_set, **training_params)
     validation_generator = DataLoader(validation_set, **validation_params)
@@ -490,6 +491,23 @@ def run(args):
 
 
     for epoch in range(args.epochs):
+        if bool(args.use_sampler):
+            np.random.seed(epoch)
+            # train_sample_weights = torch.from_numpy(train_sample_weights)
+            train_indices = torch.from_numpy(np.random.choice(len(training_set), size=(args.epoch_set_size*args.batch_size,), replace=False)) 
+            train_val_ratio = len(validation_set)/len(training_set)
+            val_indices = torch.from_numpy(np.random.choice(len(validation_set), size=(int(train_val_ratio*args.epoch_set_size*args.batch_size),), replace=False)) 
+
+            train_sampler = SubsetRandomSampler(train_indices)
+            val_sampler = SubsetRandomSampler(val_indices)
+            training_params["sampler"] = train_sampler
+            training_params["shuffle"] = False
+            validation_params["sampler"] = val_sampler
+            validation_params["shuffle"] = False
+
+        training_generator = DataLoader(training_set, **training_params)
+        validation_generator = DataLoader(validation_set, **validation_params)
+
         training_loss, training_accuracy, train_f1, train_thresh_acc = train(
             model,
             training_generator,
@@ -542,7 +560,7 @@ def run(args):
 
         # model checkpoint
 
-        if validation_f1 > best_f1:
+        if validation_f1 > best_f1 or epoch == args.epochs:
             best_f1 = validation_f1
             best_epoch = epoch
             if args.checkpoint == 1:
@@ -559,7 +577,7 @@ def run(args):
                         round(validation_f1, 4),
                     ),
                 )
-                torch.save(os.path.join(args.root, f"input/dataset/{args.model_name}.pth"))
+                torch.save(model.state_dict(), os.path.join(args.root, f"input/timestamp_dataset/{args.model_name}.pth"))
 
         if bool(args.early_stopping):
             if epoch - best_epoch > args.patience > 0:

@@ -7,15 +7,17 @@
 #ifndef MODEL_PATH
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/CharLevelCnn.pt"
 // #define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/traced_lstm_non_homogenized.pt"
-#define MODEL_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2.pt"
+// #define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_2.pt"
+#define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2.pt"
 #endif
 
 #ifndef DATA_PATH
 // #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-#define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/python/modelsaves/explicit_lstm_2_container.pt"
+// #define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_1_container.pt"
+#define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2_container.pt"
 #endif
 #ifndef DATASET_PATH
-#define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/dataset"
+#define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 #endif
 
 #include <iostream>
@@ -44,12 +46,13 @@ public:
    std::vector<int> validIndices;
    std::vector<int> invalidIndices;
    std::vector<std::string> data_strings;
+   std::vector<int> plaintext_labels;
    double tau;
 
    static std::tuple<std::shared_ptr<torch::Tensor> /*Data*/,
                      std::shared_ptr<torch::Tensor> /*labels*/,
                      std::vector<int> /*validIndices*/,
-                     std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path) {
+                     std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path, int max_num_eles) {
       try
       {
           torch::jit::script::Module container = torch::jit::load(DATA_PATH);
@@ -82,6 +85,16 @@ public:
                invalidIndices.push_back(counter);
             }
             counter++;
+         }
+         if(max_num_eles > 0) {
+            validIndices = select_random_vector_subset(validIndices, max_num_eles);
+            invalidIndices = select_random_vector_subset(invalidIndices, max_num_eles);
+            // std::vector<int> allIndices;
+            // allIndices.insert(allIndices.end(), validIndices.begin(), validIndices.end());
+            // allIndices.insert(allIndices.end(), invalidIndices.begin(), invalidIndices.end());
+
+            // X = std::make_shared<torch::Tensor>(select_tensor_subset(a, allIndices, max_num_eles*2));
+            // Y = std::make_shared<torch::Tensor>(select_tensor_subset(b, allIndices, max_num_eles*2));
          }
 #ifdef USER_DEBUG_STATEMENTS
          std::cout << "loaded " << validIndices.size() << " positive samples and " << invalidIndices.size() << " negative samples" << std::endl;
@@ -128,10 +141,12 @@ public:
          std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
       classifier = load_classifier(MODEL_PATH);
-      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH);
+      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH, projected_ele_count);
       tau = 0.5;
-      data_strings = load_dataset(DATASET_PATH);
-      evaluate_classifier();
+
+      std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
+      evaluate_plaintext_labels();
+      //evaluate_classifier();
       init_generic_bloom(projected_ele_count, false_pos_probability);
    }
 
@@ -142,11 +157,49 @@ public:
                      std::shared_ptr<torch::Tensor> y,
                      std::vector<int> v,
                      std::vector<int> i,
-                     std::vector<std::string> d): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d) 
+                     std::vector<std::string> d,
+                     std::vector<int> t
+                     ): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
    {
       tau = 0.5;
+      evaluate_plaintext_labels();
       evaluate_classifier();
       init_generic_bloom(p, f);
+   }
+
+
+   LearnedBloomFilter(int p,
+                      float f, 
+                     std::shared_ptr<torch::jit::script::Module> c,
+                     std::shared_ptr<torch::Tensor> x,
+                     std::shared_ptr<torch::Tensor> y,
+                     std::vector<int> v,
+                     std::vector<int> i,
+                     std::vector<std::string> d,
+                     std::vector<int> t,
+                     bool evaluate): classifier(c), X(x), Y(y), validIndices(v), invalidIndices(i), data_strings(d), plaintext_labels(t)
+   {
+      tau = 0.5;
+
+      std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
+      if(evaluate) {
+         evaluate_plaintext_labels();
+         evaluate_classifier();
+      }
+      init_generic_bloom(p, f);
+   }
+
+
+
+
+   ~LearnedBloomFilter() {
+         delete filter;
+         // delete classifier;
+         // delete X;
+         // delete Y;
+         // delete validIndices;
+         // delete invalidIndices;
+         // delete data_strings;
    }
 
 
@@ -172,8 +225,8 @@ public:
       }
       std::vector<torch::jit::IValue> inputs;
       inputs.push_back(input);
-      auto out = classifier->forward(inputs).toTensor().data<float>();
-      return *out > tau;
+      float out = classifier->forward(inputs).toTensor().item().to<float>();
+      return out > tau;
    }
    // Always false prediction override
    // bool predict(torch::Tensor input)
@@ -222,6 +275,7 @@ public:
       std::vector<int> index_vec = {index};
       auto tensor = select_tensor_subset(*X, index_vec, 1);
       auto prediction = predict(tensor);
+      // std::cout << "predicted " << prediction <<  " for string " << data_strings[index] << std::endl;
       if(prediction){
          return true;
       } else {
@@ -417,9 +471,9 @@ private:
    void evaluate_classifier()
    {
 
-#ifdef USER_DEBUG_STATEMENTS
+// #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
-#endif
+// #endif
       auto label_accessor = Y->accessor<float, 1>();
       unsigned int num_correct = 0;
       int num_positive_samples = 0;
@@ -442,12 +496,38 @@ private:
          }
       }
 
-#ifdef USER_DEBUG_STATEMENTS
+// #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter classifier accuracy was: " << (float)num_correct / (float)label_accessor.size(0) << std::endl;
       std::cout << "with: " << num_positive_samples << " positive samples" << std::endl;
       std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
-#endif
+// #endif
 }
+
+
+bool evaluate_plaintext_labels() {
+   auto a = Y->accessor<float, 1>();
+   auto num_labels = a.size(0);
+   if (num_labels != plaintext_labels.size()) {
+      std::cout << "number of tensor labels: " << num_labels << " number of plaintext labels: " << plaintext_labels.size() << std::endl;
+      return false;
+   } 
+
+   int num_errors = 0;
+
+   for (int i = 0; i < num_labels; i++) {
+      auto label_i = a[i];
+      auto plaintext_label_i  = plaintext_labels[i];
+      if (label_i != plaintext_label_i) { 
+         num_errors++;
+         std::cout << "keystring: " << data_strings[i] << " has plaintext label  " << plaintext_label_i << " and tensor label " << label_i << std::endl;
+      }
+   }
+
+   return num_errors <1;
+
+   }
+
+
 
    void init_generic_bloom(int projected_ele_count, float false_pos_probability) {
             bloom_parameters parameters;
@@ -465,7 +545,7 @@ private:
          return;
       }
       parameters.compute_optimal_parameters();
-      filter = new bloom_filter(parameters);
+      filter = new bloom_filter(parameters);//TODO memory leak check, make sure filter is destructed
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter init complete~!" << std::endl;
 #endif

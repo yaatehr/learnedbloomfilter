@@ -220,11 +220,13 @@ def getsize(obj):
 
 def get_model_size(model, args, input_features=None):
     input_size = (1, 1, args.max_length*args.embedding_size) if input_features == None else list(input_features.size())
+    print(input_size)
     try:
         input_size[0] = 1
         input_size = tuple(input_size)
     except:
         pass
+    print(input_size)
     print(pytorch_modelsize.summary_string(model, input_size=input_size)[0])
     print("\n\n\n\n\n\n\n")
 

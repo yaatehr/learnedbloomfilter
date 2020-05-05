@@ -205,8 +205,10 @@ torch::Tensor select_tensor_subset(torch::Tensor data, std::vector<int> &index_v
    return output;
 }
 
-torch::Tensor select_random_tensor_subset(torch::Tensor data, std::vector<int> &index_vec, int desired_num_eles)
+torch::Tensor select_random_tensor_subset(torch::Tensor data, int desired_num_eles)
 {
+   std::vector<int> index_vec(data.accessor<float, 2>().size(0));
+   std::iota(index_vec.begin(), index_vec.end(), 0);
    std::vector<int> indices = select_random_vector_subset(index_vec, desired_num_eles);
    return select_tensor_subset(data, indices, desired_num_eles);
 }
@@ -230,41 +232,46 @@ std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::str
     return csv;
 }
 
-std::vector<std::string> load_dataset(std::string location) {
+std::tuple<std::vector<int>, std::vector<std::string>> load_dataset(std::string location) {
    std::string test_set_location = location + "/test_set.txt";
    std::string validation_set_location = location + "/validation_set.txt";
 
     std::fstream in(validation_set_location, std::ios::in);
     std::string line;
     std::string key;
+    std::string key_1;
+    std::string key_2;
     std::string label;
    std::vector<std::string> keys;
    std::vector<int> labels; // TODO validate labels and return tup or pointers for these?
-   std::cout << "attempting to load from " + validation_set_location << std::endl;
+   // std::cout << "attempting to load from " + validation_set_location << std::endl;
 
-    while (getline(in, line))
-    {
-        std::stringstream s(line);
-        s >> label >> key;
-                                    // converts string to integer
-      labels.push_back(stoi(label));
-      keys.push_back(key);
-    }
-    in.close();
-   std::cout << "attempting to load from " << test_set_location << std::endl;
+   //  while (getline(in, line))
+   //  {
+   //      std::stringstream s(line);
+   //      s >> label >> key;
+   //                                  // converts string to integer
+   //    labels.push_back(stoi(label));
+   //    keys.push_back(key);
+   //  }
+   //  in.close();
+   // std::cout << "attempting to load from " << test_set_location << std::endl;
 
 
    std::fstream in2(test_set_location, std::ios::in);
        while (getline(in2, line))
     {
-        std::stringstream s(line);
-        s >> label >> key;
+        std::stringstream s(line);//TODO fix this timestamp hack
+        s >> label >> key_1 >> key_2;
+        key = key_1 + " " + key_2;
                                     // converts string to integer
       labels.push_back(stoi(label));
       keys.push_back(key);
     }
 
-    return keys;
+
+      auto output = std::tuple<std::vector<int>, std::vector<std::string>>(labels, keys);
+    return output;
 }
 
 
@@ -296,8 +303,15 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
   return linspaced;
 }
 
+template<typename T>
+T round_to_digits(T value, int digits)
+{
+    if (value == 0.0) // otherwise it will return 'nan' due to the log10() of zero
+        return (T) 0.0;
 
-
+    double factor =  pow(10.0, digits - ceil(log10(fabs(value))));
+    return (T) round(value * factor) / factor;   
+}
 
 
 // int main()

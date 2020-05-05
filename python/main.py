@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_sampler", type=int, default=0, choices=[0, 1])
 
     parser.add_argument("--alphabet", type=str, default=DEFAULT_ALPHABET)
-    parser.add_argument("--number_of_characters", type=int, default=69)
+    parser.add_argument("--number_of_characters", type=int, default=62)
     parser.add_argument("--extra_characters", type=str, default="")
     parser.add_argument("--max_length", type=int, default=124)
     parser.add_argument("--url_delimeters", type=str, default=URL_DELIM)
@@ -179,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--focal_loss", type=int, default=0, choices=[0, 1])
     parser.add_argument("--gamma", type=float, default=2)
     parser.add_argument("--alpha", type=float, default=None)
+    parser.add_argument("--epoch_set_size", type=int, default=401)
     parser.add_argument(
         "--scheduler", type=str, default="step", choices=["clr", "step"]
     )
