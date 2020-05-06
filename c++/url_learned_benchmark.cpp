@@ -1,6 +1,4 @@
 #define TORCH_INPUT_LEN 124
-#define INSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
-#define OUTSET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/clean_dedup_urls.txt"
 #define DATASET_PATH "/Users/yaatehr/Programs/learnedbloomfilters/input/timestamp_dataset"
 // #ifndef USER_DEBUG_STATEMENTS
 // #define USER_DEBUG_STATEMENTS
@@ -50,7 +48,7 @@ public:
             MyFixtureLearned::key_strings = load_dataset(DATASET_PATH);
    
             classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
-            // std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH);
+            // std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(CONTAINER_PATH);
 
 
 #ifdef USER_DEBUG_STATEMENTS

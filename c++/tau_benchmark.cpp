@@ -62,7 +62,9 @@ int main(int argc, char *argv[])
 	// 	<< chrono::duration_cast<chrono::nanoseconds>(end - start).count()
 	// 	<< " ns" << endl;
 
-      // std::string dataset_path = argc > 0 : DATASET_PATH ? argv[0];
+      std::string dataset_path = argc < 1 ? DATASET_PATH : argv[0];
+      std::string model_path = argc < 2 ? MODEL_PATH : std::string(argv[0]).append("/").append(argv[1]).append(".pt");
+      std::string container_path = argc < 2 ? CONTAINER_PATH : std::string(argv[0]).append("/").append(argv[1]).append("_container.pt");
 
 
       std::ofstream output_file;
@@ -78,7 +80,7 @@ int main(int argc, char *argv[])
       LearnedBloomFilter *filter;
       std::vector<std::string> key_strings;
       std::vector<int> plaintext_labels; 
-      std::tie(plaintext_labels, key_strings) = load_dataset(DATASET_PATH);
+      std::tie(plaintext_labels, key_strings) = load_dataset(dataset_path);
       std::shared_ptr<torch::Tensor> data;
       std::shared_ptr<torch::Tensor> labels;
       std::vector<int> validIndices;
@@ -87,8 +89,8 @@ int main(int argc, char *argv[])
       tau.push_back(1);
       std::vector<double> fpr = linspace(MAX_FPR, MIN_FPR, ARG_LENGTH_F);
 
-      std::shared_ptr<torch::jit::script::Module> classifier = LearnedBloomFilter::load_classifier(MODEL_PATH);
-      std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(DATA_PATH, -1);
+      std::shared_ptr<torch::jit::script::Module> classifier = LearnedBloomFilter::load_classifier(model_path);
+      std::tie(data, labels, validIndices, invalidIndices) = LearnedBloomFilter::load_tensor_container(container_path, -1);
 
 
 #ifdef USER_DEBUG_STATEMENTS

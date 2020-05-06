@@ -27,7 +27,7 @@ import gc
 
 
 def export_train_val_test(training_set, validation_set, test_set):
-    dir_path = os.path.join(training_set.args.root, "input/timestamp_dataset")
+    dir_path = os.path.join(training_set.args.root, f"input/{training_set.args.dataset_prefix}")
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     with open(os.path.join(dir_path, "training_set.txt"), 'w') as train_file:
@@ -361,7 +361,7 @@ def run(args):
     #     ) = pickle.load(open(cached_data_path, "rb"))
     #     print("loaded cached training data")
 
-    dataset_path = os.path.join(args.root, "input/timestamp_dataset/train_val_test.pkl")
+    dataset_path = os.path.join(args.root, f"input/{args.dataset_prefix}/train_val_test.pkl")
     if not os.path.exists(dataset_path):
         # urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
         # with open(urls_by_category_path, 'rb') as fp:
@@ -487,9 +487,6 @@ def run(args):
     else:
         scheduler = None
 
-
-
-
     for epoch in range(args.epochs):
         if bool(args.use_sampler):
             np.random.seed(epoch)
@@ -577,7 +574,7 @@ def run(args):
                         round(validation_f1, 4),
                     ),
                 )
-                torch.save(model.state_dict(), os.path.join(args.root, f"input/timestamp_dataset/{args.model_name}.pth"))
+                torch.save(model.state_dict(), os.path.join(args.root, f"input/{args.dataset_prefix}/{args.model_name}.pth"))
 
         if bool(args.early_stopping):
             if epoch - best_epoch > args.patience > 0:

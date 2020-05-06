@@ -11,10 +11,10 @@
 #define MODEL_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2.pt"
 #endif
 
-#ifndef DATA_PATH
-// #define DATA_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
-// #define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_1_container.pt"
-#define DATA_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2_container.pt"
+#ifndef CONTAINER_PATH
+// #define CONTAINER_PATH "/Users/yaatehr/Programs/learnedbloomfilters/container.pt"
+// #define CONTAINER_PATH "/home/yaatehr/programs/learnedbloomfilter/python/modelsaves/explicit_lstm_1_container.pt"
+#define CONTAINER_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset/timestamp_lstm_2_container.pt"
 #endif
 #ifndef DATASET_PATH
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
@@ -55,7 +55,7 @@ public:
                      std::vector<int> /*invalidIndices*/ > load_tensor_container(std::string data_path, int max_num_eles) {
       try
       {
-          torch::jit::script::Module container = torch::jit::load(DATA_PATH);
+          torch::jit::script::Module container = torch::jit::load(data_path);
 
          // check for valid container
          if(! (container.hasattr("data") && container.hasattr("labels"))) {
@@ -134,6 +134,9 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
+   /**
+    * Default constructor that uses hard coded paths to models and datasets
+    */
    LearnedBloomFilter(int projected_ele_count, float false_pos_probability)
    {
 
@@ -141,7 +144,7 @@ public:
          std::cout << "ATTEMPTING TO LOAD CLASSIFIER" << std::endl;
 #endif
       classifier = load_classifier(MODEL_PATH);
-      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(DATA_PATH, projected_ele_count);
+      std::tie(X, Y, validIndices, invalidIndices) = load_tensor_container(CONTAINER_PATH, projected_ele_count);
       tau = 0.5;
 
       std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
@@ -168,6 +171,10 @@ public:
    }
 
 
+   /**
+    * Efficient constructor
+    * Can toggle expensive operations with the evaluate parameter. For use in loops
+    */ 
    LearnedBloomFilter(int p,
                       float f, 
                      std::shared_ptr<torch::jit::script::Module> c,
@@ -181,7 +188,7 @@ public:
    {
       tau = 0.5;
 
-      std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
+      // std::tie(plaintext_labels, data_strings) = load_dataset(DATASET_PATH);
       if(evaluate) {
          evaluate_plaintext_labels();
          evaluate_classifier();

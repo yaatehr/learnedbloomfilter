@@ -90,8 +90,8 @@ def load_lstm(args, model_path):
     return export_model, base_model
 
 def export_lstm(args, export_dataset=True):
-    model_path = os.path.join(args.root, 'input/timestamp_dataset/timestamp_lstm.pth')
-    model_save_name = "timestamp_lstm_2"
+    model_path = os.path.join(args.root, f'input/{args.dataset_prefix}/{args.model_name}.pth')
+    model_save_name = args.model_name
     model, base_model = load_lstm(args, model_path)
     print("model loaded")
     dataset = data_loader.EncodedStringLabelDataset(args, init_tuple=(["test"]*2000, ["label"]*2000, [0]*2000, None))
@@ -109,11 +109,11 @@ def export_lstm(args, export_dataset=True):
 
     traced_script_module = torch.jit.script(model)
     print("saving model")
-    traced_script_module.save(os.path.join(args.root, "input/timestamp_dataset/%s.pt" % model_save_name))
+    traced_script_module.save(os.path.join(args.root, f"input/{args.dataset_prefix}/{args.model_name}.pt"))
     print("MODEL SAVED!")
 
     if export_dataset:
-        dataset_path = os.path.join(args.root, "input/timestamp_dataset/train_val_test.pkl")
+        dataset_path = os.path.join(args.root, f"input/{args.dataset_prefix}/train_val_test.pkl")
         try:
             training_set, validation_set, test_set = pickle.load(open(dataset_path, 'rb'))
             print("loaded train set: ", training_set.counter)
@@ -218,10 +218,12 @@ def export_lstm(args, export_dataset=True):
             'model_path': model_path
         }
         export_container = torch.jit.script(container.Container(export_values))
-        export_container.save(os.path.join(args.root, "input/timestamp_dataset/%s_container.pt" % model_save_name))
+        export_container.save(os.path.join(args.root, f"input/{args.dataset_prefix}/{args.model_name}_container.pt"))
         print("container saved successfully")
 
 
+
+#TODO update this method
 def export_blank_model(args):
     model_path = os.path.join(args.root, 'python/modelsaves/timestamp_lstm_1.pth')
     model_save_name = "timestamp_lstm_1"

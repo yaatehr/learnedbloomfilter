@@ -8,6 +8,7 @@ from datetime import datetime
 num_processes = multiprocessing.cpu_count()
 from classifier import train, export_model
 
+
 def query_google_sb(args, use_checkpoint=True):
     extractor = processing.WebCrawlExtractor(args)
     url_classifier = processing.UrlClassifier(args)
@@ -113,6 +114,7 @@ def main_loop(args):
     # dataset = load_dataset_from_shallalist(args)
     # train.run(args)
     export_model.export_lstm(args)
+    os.system("")
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -136,6 +138,7 @@ if __name__ == "__main__":
         default=os.path.join(DIRECTORY_ROOT, "input/randlabelurls.txt"),
         # default=os.path.join(DIRECTORY_ROOT, "input/classified_web_crawl_urls.txt"),
     )  # TODO (finetuning - change this to point to the true training data)
+    parser.add_argument("--dataset_prefix", type=str, default="")
     parser.add_argument("--validation_split", type=float, default=0.1)
     parser.add_argument("--label_column", type=str, default="Label")
     parser.add_argument("--text_column", type=str, default="Text")
@@ -218,6 +221,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     args.embedding_size_bits = (len(args.alphabet) + 1) * args.embedding_size * 32 # bits per float in numpy float32
+    if args.dataset_prefix == "":
+        args.dataset_prefix = f"{args.model_name}_dataset"
 
     main_loop(args)
 
