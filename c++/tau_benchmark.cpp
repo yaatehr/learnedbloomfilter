@@ -119,7 +119,7 @@ for(int i = 0; i < argc; i++) {
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture setup entered";
 #endif
-            bool evaluate_filter = (i + j) == 0;// only evaluate on the first run
+            bool evaluate_filter = false;// only evaluate on the first run
 
             double t = tau[i];
             int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
