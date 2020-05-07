@@ -260,7 +260,7 @@ def run(args):
                 shutil.rmtree(args.log_path + f)
 
     now = datetime.now()
-    logdir = args.log_path + now.strftime("%Y%m%d-%H%M%S") + "/"
+    logdir = args.log_path + args.model_name + "/"
     os.makedirs(logdir)
     log_file = logdir + "log.txt"
     writer = SummaryWriter(logdir)
