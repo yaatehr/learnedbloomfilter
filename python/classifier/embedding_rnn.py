@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class GRUBasic(nn.Module):
-    def __init__(self, args, num_classes, built_in_dropout=False):
+    def __init__(self, args, num_classes=1, built_in_dropout=False):
         super(GRUBasic, self).__init__()
         dropout = args.dropout_input
         self.hidden_dim = args.hidden_dim
