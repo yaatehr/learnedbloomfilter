@@ -16,16 +16,16 @@ class LSTMBasic(nn.Module):
         self.bi = args.bidirectional == 1
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
-        self.embedding_size = (
-            (args.number_of_characters + len(args.extra_characters))*args.max_length
+        self.embedding_depth = (
+            (args.number_of_characters + len(args.extra_characters))*args.max_embedding_length
             if args.use_char_encoding
-            else args.embedding_size * args.max_length
+            else args.embedding_depth * args.max_embedding_length
         )
         self.built_in_dropout = built_in_dropout
 
         if not built_in_dropout:
             self.lstm = nn.LSTM(
-                self.embedding_size,
+                self.embedding_depth,
                 hidden_size=self.hidden_dim,
                 bidirectional=self.bi,
                 batch_first=False,
@@ -33,7 +33,7 @@ class LSTMBasic(nn.Module):
             self.dropout = nn.Dropout(dropout)
         else:
             self.lstm = nn.LSTM(
-                self.embedding_size,
+                self.embedding_depth,
                 hidden_size=self.hidden_dim,
                 bidirectional=self.bi,
                 batch_first=False,
@@ -86,19 +86,19 @@ class LSTMBasicX(nn.Module):
         self.bi = args.bidirectional == 1
         self.num_layers = 1  # TODO remove param or deprecate?
         self.num_classes = num_classes
-        self.embedding_size = (
-            (args.number_of_characters + len(args.extra_characters))*args.max_length
+        self.embedding_depth = (
+            (args.number_of_characters + len(args.extra_characters))*args.max_embedding_length
             if args.use_char_encoding
-            else args.embedding_size * args.max_length
+            else args.embedding_depth * args.max_embedding_length
         )
         self.tau = args.tau
 
 
         self.hidden = self.init_hidden()
-        self.projected_input_shape = (1, 1, self.embedding_size) 
+        self.projected_input_shape = (1, 1, self.embedding_depth) 
 
         self.lstm = nn.LSTM(
-            self.embedding_size,
+            self.embedding_depth,
             hidden_size=self.hidden_dim,
             bidirectional=self.bi,
             batch_first=False,

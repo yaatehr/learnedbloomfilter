@@ -30,7 +30,7 @@ def test_model(model, dataset_generator):
     print("predicted %d positive labels" % num_inset_predicted)
     return total_errors
 
-def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_eles=21696, target_fpr=.001, num_tau=10):
+def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_eles=21696, target_fpr=.001, num_tau=1):
     k,m,n,p = bloom_calc.km_from_np(projected_num_eles, target_fpr)
     num_classified_dict = {}
     potential_tau_dict = {}
@@ -71,7 +71,7 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
     print(num_classified_dict)
     # print(potential_tau_dict)
 
-    valid_tau = {k: v for k, v in sorted(potential_tau_dict.items(), key=lambda item: item[1][0], reverse=True) if v > 0}
+    valid_tau = {k: v for k, v in sorted(potential_tau_dict.items(), key=lambda item: item[1][0], reverse=True)} #if v[0] > 0}
     print(valid_tau)
     # if len(valid_tau) == 0:
     #     raise Exception("No valid tau values were found, this classifier will notb beat aout a generic bloom filter")
@@ -144,7 +144,7 @@ def export_lstm(args, export_dataset=True):
             
             return tensor_list, label_list
 
-        validation_generator = DataLoader(validation_set, **export_params)
+        # validation_generator = DataLoader(validation_set, **export_params)
         test_generator = DataLoader(test_set, **export_params)
 
         i, (feats, labels) = list(enumerate(test_generator))[0]

@@ -133,10 +133,10 @@ class EncodedDataset(Dataset):
             self.tokens = tokens
             self.tokenizer = UrlTokenizer(args)
             # see https://github.com/RaRe-Technologies/gensim/blob/develop/gensim/models/word2vec.py for attributes & use
-            self.embedding_size = args.embedding_size    # Word vector dimensionality  
+            self.embedding_depth = args.embedding_depth    # Word vector dimensionality  
             self.embedding_window = args.embedding_window          # Context window size                                                                                    
             self.min_word_count = args.min_word_count   # Minimum word count                        
-            self.model = gensim.models.Word2Vec(self.tokens, size=self.embedding_size, 
+            self.model = gensim.models.Word2Vec(self.tokens, size=self.embedding_depth, 
                           window=self.embedding_window, min_count=self.min_word_count, workers=4, iter=50)
             print(self.model)
             if args.debug:
@@ -152,7 +152,7 @@ class EncodedDataset(Dataset):
             #self.number_of_characters = #TODO
         #TODO(Stretch) make an encoding with glove?
 
-        self.max_length = args.max_length
+        self.max_embedding_length = args.max_embedding_length
         # self.preprocessing_steps = args.steps
 
     def __len__(self):
@@ -167,26 +167,26 @@ class EncodedDataset(Dataset):
             raw_text = self.texts[index]
             data = np.array([self.identity_mat[self.vocabulary.index(i)] for i in list(raw_text)[::-1] if i in self.vocabulary],
                             dtype=np.float32) #TODO why is this backwards?
-            if len(data) > self.max_length:
-                data = data[:self.max_length]
-            elif 0 < len(data) < self.max_length:
+            if len(data) > self.max_embedding_length:
+                data = data[:self.max_embedding_length]
+            elif 0 < len(data) < self.max_embedding_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.max_length - len(data), self.number_of_characters), dtype=np.float32)))
+                    (data, np.zeros((self.max_embedding_length - len(data), self.number_of_characters), dtype=np.float32)))
             elif len(data) == 0:
                 data = np.zeros(
-                    (self.max_length, self.number_of_characters), dtype=np.float32)
+                    (self.max_embedding_length, self.number_of_characters), dtype=np.float32)
 
         else:
             tokens = self.tokens[index]
             data = np.array([self.model.wv[t] for t in tokens[::-1] if t is not None])
-            if len(data) > self.max_length:
-                data = data[:self.max_length]
-            elif 0 < len(data) < self.max_length:
+            if len(data) > self.max_embedding_length:
+                data = data[:self.max_embedding_length]
+            elif 0 < len(data) < self.max_embedding_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.max_length - len(data), self.embedding_size), dtype=np.float32))) #TODO is this the right dtype?
+                    (data, np.zeros((self.max_embedding_length - len(data), self.embedding_depth), dtype=np.float32))) #TODO is this the right dtype?
             elif len(data) == 0:
                 data = np.zeros(
-                    (self.max_length, self.embedding_size), dtype=np.float32)
+                    (self.max_embedding_length, self.embedding_depth), dtype=np.float32)
 
         label = self.labels[index]
         data = torch.Tensor(data)
@@ -220,30 +220,30 @@ class EncodedStringLabelDataset(Dataset):
     def __getitem__(self, index):
         #TODO would memoizing these embeddings be too large? ie making an embedded url matrix as we go?
         if not self.args.use_word2vec_encoding:
-            embedding_size = len(self.tokenizer.alphabet) if self.args.use_char_encoding else self.args.embedding_size
+            embedding_depth = len(self.tokenizer.alphabet) if self.args.use_char_encoding else self.args.embedding_depth
             raw_text = self.texts[index]
             data = np.array([self.identity_mat[self.tokenizer.alphabet.index(i.lower())] for i in list(raw_text)[::-1] if i.lower() in self.tokenizer.alphabet],
                             dtype=np.float32) #TODO why is this backwards?
             #TODO fix this hack for uppercase letters in a more efficient way
-            if len(data) > self.args.max_length:
-                data = data[:self.args.max_length]
-            elif 0 < len(data) < self.args.max_length:
+            if len(data) > self.args.max_embedding_length:
+                data = data[:self.args.max_embedding_length]
+            elif 0 < len(data) < self.args.max_embedding_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.args.max_length - len(data), embedding_size), dtype=np.float32)))
+                    (data, np.zeros((self.args.max_embedding_length - len(data), embedding_depth), dtype=np.float32)))
             elif len(data) == 0:
                 data = np.zeros(
-                    (self.args.max_length, embedding_size), dtype=np.float32)
+                    (self.args.max_embedding_length, embedding_depth), dtype=np.float32)
         else:
             tokens = self.tokens[index]
             data = np.array([self.model.wv[t] for t in tokens[::-1] if t is not None])
-            if len(data) > self.args.max_length:
-                data = data[:self.args.max_length]
-            elif 0 < len(data) < self.args.max_length:
+            if len(data) > self.args.max_embedding_length:
+                data = data[:self.args.max_embedding_length]
+            elif 0 < len(data) < self.args.max_embedding_length:
                 data = np.concatenate(
-                    (data, np.zeros((self.args.max_length - len(data), self.args.embedding_size), dtype=np.float32))) #TODO is this the right dtype?
+                    (data, np.zeros((self.args.max_embedding_length - len(data), self.args.embedding_depth), dtype=np.float32))) #TODO is this the right dtype?
             elif len(data) == 0:
                     data = np.zeros(
-                        (self.args.max_length, self.args.embedding_size), dtype=np.float32)
+                        (self.args.max_embedding_length, self.args.embedding_depth), dtype=np.float32)
 
         label = self.labels[index]
         data = torch.Tensor(data)
@@ -359,7 +359,7 @@ class EncodedStringLabelDataset(Dataset):
             if self.args.debug:
                 print("DEBUG: initializing token word2vec model")
             # see https://github.com/RaRe-Technologies/gensim/blob/develop/gensim/models/word2vec.py for attributes & use                                                                                 
-            self.model = gensim.models.Word2Vec(self.tokens, size=self.args.embedding_size, 
+            self.model = gensim.models.Word2Vec(self.tokens, size=self.args.embedding_depth, 
                         window=self.args.embedding_window, min_count=self.args.min_word_count, workers=4, iter=50)
 
             print(self.model)
@@ -391,8 +391,8 @@ class EncodedStringLabelDataset(Dataset):
                 embedding_matrix[i] = embedding_vector
 
             print(embedding_matrix.shape)
-            if self.args.embedding_size != embedding_matrix.shape[1] :
-                pca = PCA(n_components=self.args.embedding_size)
+            if self.args.embedding_depth != embedding_matrix.shape[1] :
+                pca = PCA(n_components=self.args.embedding_depth)
                 pca.fit(embedding_matrix[1:])
                 embedding_matrix_pca = np.array(pca.transform(embedding_matrix[1:]), dtype=np.float32)
                 embedding_matrix_pca = np.insert(embedding_matrix_pca, 0, 0, axis=0)

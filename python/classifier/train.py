@@ -567,7 +567,7 @@ def run(args):
                     + "model_{}_epoch_{}_maxlen_{}_lr_{}_loss_{}_acc_{}_f1_{}.pth".format(
                         args.model_name,
                         epoch,
-                        args.max_length,
+                        args.max_embedding_length,
                         optimizer.state_dict()["param_groups"][0]["lr"],
                         round(validation_loss, 4),
                         round(validation_accuracy, 4),

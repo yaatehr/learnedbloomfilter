@@ -113,8 +113,8 @@ def main_loop(args):
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
     # train.run(args)
-    export_model.export_lstm(args)
-    os.system("")
+    # export_model.export_lstm(args)
+    os.system(f"cd ../c++/build/ && make && ./bin/learned_b {args.root} {args.model_name}")
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
@@ -131,6 +131,8 @@ if __name__ == "__main__":
 
     print("running main loop from \n  DIRECTORY ROOT: ", DIRECTORY_ROOT)
     parser = argparse.ArgumentParser("Classifier trainer")
+
+    #Key paths and parameters
     parser.add_argument("--root", type=str, default=DIRECTORY_ROOT)
     parser.add_argument(
         "--data_path",
@@ -139,6 +141,10 @@ if __name__ == "__main__":
         # default=os.path.join(DIRECTORY_ROOT, "input/classified_web_crawl_urls.txt"),
     )  # TODO (finetuning - change this to point to the true training data)
     parser.add_argument("--dataset_prefix", type=str, default="")
+    parser.add_argument("--model_name", type=str, required=True)
+
+    ####################### DATA Intake and Processing
+    #Parser Parameters
     parser.add_argument("--validation_split", type=float, default=0.1)
     parser.add_argument("--label_column", type=str, default="Label")
     parser.add_argument("--text_column", type=str, default="Text")
@@ -147,31 +153,33 @@ if __name__ == "__main__":
     parser.add_argument("--encoding", type=str, default="utf-8")
     parser.add_argument(
         "--sep", type=str, default="\s+"
-    )  # TODO update if we need to seperate by commas
+    )
     parser.add_argument("--num_text_processing_threads", type=int, default=2)
-    parser.add_argument("--use_char_encoding", type=int, default=0)
-
-    # parser.add_argument('--steps', nargs='+', default=['lower'])
-    # parser.add_argument('--group_labels', type=int, default=1, choices=[0, 1])
-    # parser.add_argument('--ignore_center', type=int, default=1, choices=[0, 1])
-    # parser.add_argument('--label_ignored', type=int, default=None)
-    parser.add_argument("--ratio", type=float, default=1)
-    parser.add_argument("--balance", type=int, default=0, choices=[0, 1])
     parser.add_argument("--use_sampler", type=int, default=0, choices=[0, 1])
+
+    #Embedding Parameters
 
     parser.add_argument("--alphabet", type=str, default=DEFAULT_ALPHABET)
     parser.add_argument("--number_of_characters", type=int, default=62)
     parser.add_argument("--extra_characters", type=str, default="")
-    parser.add_argument("--max_length", type=int, default=124)
     parser.add_argument("--url_delimeters", type=str, default=URL_DELIM)
 
+    parser.add_argument("--max_embedding_length", type=int, default=124)
+    parser.add_argument("--embedding_depth", type=int, default=32)
+    
+    #Character Embedding
+    parser.add_argument("--use_char_encoding", type=int, default=0)
+
+    #Glove Character Embeddings
+    parser.add_argument("--embedding_path", type=str, default=os.path.join(DIRECTORY_ROOT, 'input/glove.6B.50d-char.txt'))
+
+    #Word2Vec Embedding
+    parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])
     parser.add_argument("--min_word_count", type=int, default=1)
     parser.add_argument("--embedding_window", type=int, default=3)
-    parser.add_argument("--embedding_size", type=int, default=32)
-    parser.add_argument("--embedding_path", type=str, default=os.path.join(DIRECTORY_ROOT, 'input/glove.6B.50d-char.txt'))
-    parser.add_argument("--tau", type=float, default=0.5)
 
-    # training params
+
+    ########################### Classifier Training and Evaluation Params
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--dropout_input", type=float, default=0.1)
     parser.add_argument("--epochs", type=int, default=10)
@@ -193,11 +201,12 @@ if __name__ == "__main__":
     parser.add_argument("--early_stopping", type=int, default=0, choices=[0, 1])
     parser.add_argument("--weight_decay", type=float, default=0)
     parser.add_argument("--checkpoint", type=int, choices=[0, 1], default=1)
+    parser.add_argument("--tau", type=float, default=0.5)
 
-    # Rnn params
+
+    # Rnn specific params
     parser.add_argument("--hidden_dim", type=int, default=16)
-    parser.add_argument("--num_hidden_layers", type=int, default=1)  # TODO deprecate?
-    parser.add_argument("--bidirectional", type=int, default=0, choices=[0, 1])
+    parser.add_argument("--bidirectional", type=int, default=0, choices=[0])# , 1]) #TODO complete implementation before enabling bidiretional 
 
     # logging params
     parser.add_argument("--log_path", type=str, default="./logs/")
@@ -205,22 +214,24 @@ if __name__ == "__main__":
     parser.add_argument("--log_f1", type=int, default=1, choices=[0, 1])
     parser.add_argument("--flush_history", type=int, default=0, choices=[0, 1])
     parser.add_argument("--output", type=str, default="./modelsaves/")
-    parser.add_argument("--model_name", type=str, default="")
 
-    parser.add_argument("--dry_run", type=int, default=0, choices=[0,1])
 
+    #Shallalist Dataset (or another semantically segmented dataset)
     # parser.add_argument("--in_set_labels", type=list, default=["sports","travel","humor","martialarts","wellness","restaurants"])
     parser.add_argument("--in_set_labels", type=list, default=['porn', 'models', 'education', 'lingerie'])
-    parser.add_argument("--drop_out_set", type=int, default=1, choices=[0,1])             #TODO Deprecate this hack?
+    parser.add_argument("--drop_out_set", type=int, default=1, choices=[0,1])
     parser.add_argument("--use_string_labels", type=int, default=1, choices=[0,1])
-    parser.add_argument("--use_word2vec_encoding", type=int, default=1, choices=[0,1])
+    
+    ################################### Miscellaneous
+    # for google safebrowsing API (to find malicous URLs)
     # parser.add_argument("--api_key", type=str, required=True)
     parser.add_argument("--query_timeout", type=int, default=3)
-
     parser.add_argument("--debug", type=bool, default=True)
+    parser.add_argument("--dry_run", type=int, default=0, choices=[0,1], help="Prevents model evaluation. Used for debugging")
+
 
     args = parser.parse_args()
-    args.embedding_size_bits = (len(args.alphabet) + 1) * args.embedding_size * 32 # bits per float in numpy float32
+    args.embedding_size_bits = (len(args.alphabet) + 1) * args.embedding_depth * 32 # bits per float in numpy float32
     if args.dataset_prefix == "":
         args.dataset_prefix = f"{args.model_name}_dataset"
 

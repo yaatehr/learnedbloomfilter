@@ -28,7 +28,7 @@ class UrlTokenizer:
             print("inititalizing url delimeters to be: \n ", self.url_delimeters)
             print("inititalizing alphabet to be: \n ", self.alphabet)
             print("END DEBUG INFO \n\n")
-        self.max_num_tokens = args.max_length
+        self.max_num_tokens = args.max_embedding_length
         self.regex_str = "[" + self.url_delimeters + "]"
 
     def tokenize(self, text):

@@ -126,7 +126,7 @@ def preprocess_input(args):
     number_of_characters = args.number_of_characters + len(args.extra_characters)
     identity_mat = np.identity(number_of_characters)
     vocabulary = list(args.alphabet) + list(args.extra_characters)
-    max_length = args.max_length
+    max_embedding_length = args.max_embedding_length
 
     processed_output = np.array(
         [
@@ -136,21 +136,21 @@ def preprocess_input(args):
         ],
         dtype=np.float32,
     )
-    if len(processed_output) > max_length:
-        processed_output = processed_output[:max_length]
-    elif 0 < len(processed_output) < max_length:
+    if len(processed_output) > max_embedding_length:
+        processed_output = processed_output[:max_embedding_length]
+    elif 0 < len(processed_output) < max_embedding_length:
         processed_output = np.concatenate(
             (
                 processed_output,
                 np.zeros(
-                    (max_length - len(processed_output), number_of_characters),
+                    (max_embedding_length - len(processed_output), number_of_characters),
                     dtype=np.float32,
                 ),
             )
         )
     elif len(processed_output) == 0:
         processed_output = np.zeros(
-            (max_length, number_of_characters), dtype=np.float32
+            (max_embedding_length, number_of_characters), dtype=np.float32
         )
     return processed_output
 
@@ -218,21 +218,27 @@ def getsize(obj):
         objects = get_referents(*need_referents)
     return size
 
-def get_model_size(model, args, input_features=None):
-    input_size = (1, 1, args.max_length*args.embedding_size) if input_features == None else list(input_features.size())
-    print(input_size)
+def get_model_size(model, args, input_features=None, verbose=False):
+    input_size = (1, 1, args.max_embedding_length*args.embedding_depth) if input_features == None else list(input_features.size())
     try:
         input_size[0] = 1
         input_size = tuple(input_size)
     except:
         pass
-    print(input_size)
-    print(pytorch_modelsize.summary_string(model, input_size=input_size)[0])
-    print("\n\n\n\n\n\n\n")
-
-    print("python size estimate: ", getsize(model))
+    
+    print("input size: ", input_size)
 
     (total_size, total_input_size, total_output_size, total_params_size), (total_params, trainable_params) = pytorch_modelsize.summary_tuple(model, input_size=input_size)
+
+    if verbose:
+        print(input_size)
+        print(pytorch_modelsize.summary_string(model, input_size=input_size)[0])
+        print("\n\n\n\n\n\n\n")
+
+        print("python size estimate: ", getsize(model))
+
+    print("="*25 + "Model Size" + "="*25)
+
     print("total size estimate ", total_size)
     print("params: ", total_params_size) # bits taken up by parameters
     print("forward backwards: ", total_output_size) # bits stored for forward and backward

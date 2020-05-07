@@ -7,14 +7,14 @@ class EmbeddingCnn(nn.Module):
         super(EmbeddingCnn, self).__init__()
         self.dropout_input = nn.Dropout2d(args.dropout_input)
 
-        self.embedding_size = (
+        self.embedding_depth = (
             args.number_of_characters + len(args.extra_characters)
             if args.use_char_encoding
-            else args.embedding_size
+            else args.embedding_depth
         )
-        # print(args.use_char_encoding, self.embedding_size)
+        # print(args.use_char_encoding, self.embedding_depth)
         self.conv1 = nn.Sequential(
-            nn.Conv1d(self.embedding_size, 256, kernel_size=7, padding=0),
+            nn.Conv1d(self.embedding_depth, 256, kernel_size=7, padding=0),
             nn.ReLU(),
             nn.MaxPool1d(3),
         )
@@ -41,7 +41,7 @@ class EmbeddingCnn(nn.Module):
 
         # compute the  output shape after forwarding an input to the conv layers
 
-        input_shape = (128, args.max_length, self.embedding_size)
+        input_shape = (128, args.max_embedding_length, self.embedding_depth)
         print(
             "input shape: ", input_shape
         )  # TODO why is the minimum possible max length 124 (ie sequence length)

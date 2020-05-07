@@ -11,16 +11,16 @@ class GRUBasic(nn.Module):
         self.bi = args.bidirectional
         self.num_layers = 1 #TODO remove this param or fix this
         self.num_classes = num_classes
-        self.embedding_size = (
+        self.embedding_depth = (
             args.number_of_characters + len(args.extra_characters)
             if args.use_char_encoding
-            else args.embedding_size * args.max_length
+            else args.embedding_depth * args.max_embedding_length
         )
         self.built_in_dropout = built_in_dropout
 
         if not built_in_dropout:
             self.gru = nn.GRU(
-                self.embedding_size,
+                self.embedding_depth,
                 hidden_size=self.hidden_dim,
                 bidirectional=self.bi,
                 batch_first=False,
@@ -28,7 +28,7 @@ class GRUBasic(nn.Module):
             self.dropout = nn.Dropout(dropout)
         else:
             self.gru = nn.GRU(
-                self.embedding_size,
+                self.embedding_depth,
                 hidden_size=self.hidden_dim,
                 bidirectional=self.bi,
                 batch_first=False,
