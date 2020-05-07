@@ -76,7 +76,7 @@ for(int i = 0; i < argc; i++) {
       std::ofstream output_file;
       output_file.open(std::string(argv[2]).append(".csv"));
       // write header to file
-      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles,projected_ele_count,fallback_percentage,num_fallback_eles,gbf_effective_fpr\n";
+      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture init";
             std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
