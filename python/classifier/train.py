@@ -418,7 +418,7 @@ def run(args):
 
     # model = embedding_cnn.EmbeddingCnn(args, number_of_classes)
     # model = embedding_rnn.GRUBasic(args, number_of_classes)
-    model = embedding_lstm.LSTMBasic(args) #note we are now using sigmoid outputs
+    model = embedding_rnn.GRUBasic(args) #note we are now using sigmoid outputs
     # if torch.cuda.is_available():
     # #     model.cuda()
     # with open("CharLevelCnnData.pkl", 'wb') as f:
