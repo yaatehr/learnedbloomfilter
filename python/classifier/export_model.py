@@ -30,7 +30,7 @@ def test_model(model, dataset_generator):
     print("predicted %d positive labels" % num_inset_predicted)
     return total_errors
 
-def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_eles=21696, target_fpr=.001, num_tau=1):
+def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_eles=21696, target_fpr=.001, num_tau=24):
     k,m,n,p = bloom_calc.km_from_np(projected_num_eles, target_fpr)
     num_classified_dict = {}
     potential_tau_dict = {}
