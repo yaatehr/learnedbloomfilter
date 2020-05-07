@@ -67,7 +67,7 @@ class GRUBasic(nn.Module):
 
 class GRUBasicX(nn.Module):
     def __init__(self, args, model_path, num_classes=1):
-        super(GRUBasic, self).__init__()
+        super(GRUBasicX, self).__init__()
         self.hidden_dim = args.hidden_dim
         self.bi = args.bidirectional == 1
         self.num_layers = 1 #TODO remove this param or fix this
