@@ -63,12 +63,14 @@ int main(int argc, char *argv[])
 	// 	<< " ns" << endl;
 
 #ifdef USER_DEBUG_STATEMENTS
-      std::cout << argv[0] << "\n" << argv[1] << std::endl;
+for(int i = 0; i < argc; i++) {
+      std::cout << argv[i] << std::endl;
+}
 #endif
 
-      std::string dataset_path = argc < 1 ? DATASET_PATH : argv[0];
-      std::string model_path = argc < 2 ? MODEL_PATH : std::string(argv[0]).append("/").append(argv[1]).append(".pt");
-      std::string container_path = argc < 2 ? CONTAINER_PATH : std::string(argv[0]).append("/").append(argv[1]).append("_container.pt");
+      std::string dataset_path = argc < 2 ? DATASET_PATH : argv[1];
+      std::string model_path = argc < 3 ? MODEL_PATH : std::string(argv[1]).append("/").append(argv[2]).append(".pt");
+      std::string container_path = argc < 3 ? CONTAINER_PATH : std::string(argv[1]).append("/").append(argv[2]).append("_container.pt");
 
 
       std::ofstream output_file;
