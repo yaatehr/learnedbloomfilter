@@ -8,9 +8,9 @@
 #define ARG_LENGTH_F 30
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
-#ifndef USER_DEBUG_STATEMENTS
-#define USER_DEBUG_STATEMENTS
-#endif
+// #ifndef USER_DEBUG_STATEMENTS
+// #define USER_DEBUG_STATEMENTS
+// #endif
 
 #include <iostream>
 #include <string>
@@ -91,8 +91,16 @@ for(int i = 0; i < argc; i++) {
       std::shared_ptr<torch::Tensor> labels;
       std::vector<int> validIndices;
       std::vector<int> invalidIndices;
-      std::vector<double> tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH_T - 1);
+
+
+      std::vector<double> tau;
+      std::vector<double> tau_fallback_percentage;
+      std::tie(tau, tau_fallback_percentage) = load_tau_to_fpr(dataset_path);
+
+      // std::vector<double> tau = linspace(MIN_TAU, MAX_TAU, ARG_LENGTH_T - 1);
       tau.push_back(1);
+      tau_fallback_percentage.push_back(1);
+      int arg_length_t = tau.size();
       std::vector<double> fpr = linspace(MAX_FPR, MIN_FPR, ARG_LENGTH_F);
 
       std::shared_ptr<torch::jit::script::Module> classifier = LearnedBloomFilter::load_classifier(model_path);
@@ -103,8 +111,8 @@ for(int i = 0; i < argc; i++) {
             std::cout << "loaded " << key_strings.size() << " strings from dataset" << std::endl;
 #endif
 
-      for(int i = 0 ; i < ARG_LENGTH_T; i++) { // tau index
-            std::cout << "progress bar: " << i << "/" << ARG_LENGTH_T << std::endl;
+      for(int i = 0 ; i < arg_length_t; i++) { // tau index
+            std::cout << "progress bar: " << i << "/" << arg_length_t << std::endl;
             for( int j = 0; j < ARG_LENGTH_F; j++) {// fpr index
 
 
@@ -113,8 +121,9 @@ for(int i = 0; i < argc; i++) {
 #endif
             bool evaluate_filter = (i + j) == 0;// only evaluate on the first run
 
-            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             double t = tau[i];
+            int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
+            filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);
       
 

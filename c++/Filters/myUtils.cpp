@@ -232,6 +232,29 @@ std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::str
     return csv;
 }
 
+
+std::tuple<std::vector<double>, std::vector<double>> load_tau_to_fpr(std::string root){
+   std::string file_path = root + "/tau_fpr.txt";
+   std::fstream in(file_path, std::ios::in);
+    std::string line;
+   double tau;
+   double heuristic;
+   double emp_fpr;
+   std::vector<double> tau_vec;
+   std::vector<double> emp_fpr_vec;
+
+   while (getline(in, line))
+    {
+       std::stringstream s(line);
+       s >> tau >> heuristic >> emp_fpr;
+       tau_vec.push_back(tau);
+       emp_fpr_vec.push_back(emp_fpr);
+    }
+
+    auto output = std::tuple<std::vector<double>, std::vector<double>>(tau_vec, emp_fpr_vec);
+    return output;
+}
+
 std::tuple<std::vector<int>, std::vector<std::string>> load_dataset(std::string location) {
    std::string test_set_location = location + "/test_set.txt";
    std::string validation_set_location = location + "/validation_set.txt";

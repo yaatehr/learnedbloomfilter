@@ -40,6 +40,7 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
         num_false_pos = 0
         num_false_neg = 0
         num_samples = 0
+        num_pos_predictions = 0
         for i, (features, labels) in enumerate(dataset_generator):
             y_true = labels.cpu().numpy()
             true_pos_indices = np.argwhere(y_true == 1)
@@ -47,6 +48,7 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
             predictions = model(features)
             y_pred = torch.round(predictions).cpu().detach().numpy()
             bloom_pred = (y_pred > tau).astype(np.float32)
+            num_pos_predictions += np.sum(bloom_pred)
             for i in true_pos_indices:
                 if bloom_pred[i] != y_true[i]:
                     num_false_pos += 1
@@ -63,10 +65,11 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
         fnr = num_false_neg / num_samples
         fpr = num_false_pos / num_samples
         num_classified_dict[tau] = num_properly_classified
-        out = utils.mitzenmacher_theorem(0.6185, fpr, fnr, k, model_size, projected_num_eles) #assuming bits per item is the numebr of hash functions we use
-        potential_tau_dict[tau] = (out, fpr)
+        fallback_percentage = (num_samples - num_pos_predictions) / num_samples
+        out = utils.mitzenmacher_theorem(0.6185, fpr, fnr, k, model_size, int(fallback_percentage *  projected_num_eles)) #assuming bits per item is the numebr of hash functions we use
+        potential_tau_dict[tau] = (out, fallback_percentage)
 
-        print(tau, out, fpr, fnr, k, model_size, projected_num_eles)
+        print(tau, out, fpr, fnr, k, model_size, int(fallback_percentage *  projected_num_eles))
 
     print(num_classified_dict)
     # print(potential_tau_dict)
