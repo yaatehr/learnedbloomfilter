@@ -74,7 +74,7 @@ for(int i = 0; i < argc; i++) {
 
 
       std::ofstream output_file;
-      output_file.open("debug.csv");
+      output_file.open(std::string(argv[2]).append(".csv"));
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles\n";
 #ifdef USER_DEBUG_STATEMENTS
