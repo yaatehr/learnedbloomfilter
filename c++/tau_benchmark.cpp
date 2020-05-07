@@ -8,9 +8,9 @@
 #define ARG_LENGTH_F 30
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
-// #ifndef USER_DEBUG_STATEMENTS
-// #define USER_DEBUG_STATEMENTS
-// #endif
+#ifndef USER_DEBUG_STATEMENTS
+#define USER_DEBUG_STATEMENTS
+#endif
 
 #include <iostream>
 #include <string>
@@ -62,7 +62,9 @@ int main(int argc, char *argv[])
 	// 	<< chrono::duration_cast<chrono::nanoseconds>(end - start).count()
 	// 	<< " ns" << endl;
 
+#ifdef USER_DEBUG_STATEMENTS
       std::cout << argv[0] << "\n" << argv[1] << std::endl;
+#endif
 
       std::string dataset_path = argc < 1 ? DATASET_PATH : argv[0];
       std::string model_path = argc < 2 ? MODEL_PATH : std::string(argv[0]).append("/").append(argv[1]).append(".pt");
