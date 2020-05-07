@@ -85,8 +85,8 @@ def find_optimal_tau_vals(model, dataset_generator, model_size, projected_num_el
 
 def load_lstm(args, model_path):
     #TODO load the original model and test what the outputs are on this side. they should match. 
-    export_model = embedding_lstm.LSTMBasicX(args, model_path)
-    base_model = embedding_lstm.LSTMBasic(args)
+    export_model = embedding_rnn.GRUBasicX(args, model_path)
+    base_model = embedding_rnn.GRUBasic(args)
     export_model.eval()
     base_model.load_state_dict(torch.load(model_path))
     base_model.eval()
