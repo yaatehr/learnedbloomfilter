@@ -113,7 +113,7 @@ def main_loop(args):
     # train_model(args)
     # dataset = load_dataset_from_shallalist(args)
     # train.run(args)
-    # export_model.export_lstm(args)
+    export_model.export_lstm(args)
     dataset_path = os.path.join(args.root, f'input/{args.dataset_prefix}')
     os.system(f"cd ../c++/build/ && make && ./bin/learned_b {dataset_path} {args.model_name}")
     # extractor.process_crawl()
