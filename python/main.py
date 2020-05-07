@@ -114,7 +114,8 @@ def main_loop(args):
     # dataset = load_dataset_from_shallalist(args)
     # train.run(args)
     # export_model.export_lstm(args)
-    os.system(f"cd ../c++/build/ && make && ./bin/learned_b {args.root} {args.model_name}")
+    dataset_path = os.path.join(args.root, f'input/{args.dataset_prefix}')
+    os.system(f"cd ../c++/build/ && make && ./bin/learned_b {dataset_path} {args.model_name}")
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")

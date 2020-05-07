@@ -1,0 +1,60 @@
+Training on Epoch 0 
+Average loss: 13.830373764038086 
+Average accuracy: 0.4994625 
+Average thresholded accuracy: 0.4994625 
+F1 score: 0.3327362823761848 
+
+              precision    recall  f1-score   support
+
+           0       0.50      1.00      0.67     39957
+           1       0.00      0.00      0.00     40043
+
+    accuracy                           0.50     80000
+   macro avg       0.25      0.50      0.33     80000
+weighted avg       0.25      0.50      0.33     80000
+*************************
+Validation on Epoch 0 
+Average loss: 0.6977021098136902 
+Average accuracy: 0.49526315789473685 
+Average thresholded accuracy: 0.49964912280701756 
+F1 score 0.358007605678496 
+
+              precision    recall  f1-score   support
+
+           0       0.50      0.96      0.65      5696
+           1       0.44      0.03      0.06      5704
+
+    accuracy                           0.50     11400
+   macro avg       0.47      0.50      0.36     11400
+weighted avg       0.47      0.50      0.36     11400
+==================================================
+Training on Epoch 1 
+Average loss: 13.77648639678955 
+Average accuracy: 0.5014125 
+Average thresholded accuracy: 0.5014125 
+F1 score: 0.3349039589802936 
+
+              precision    recall  f1-score   support
+
+           0       0.50      1.00      0.67     40113
+           1       0.00      0.00      0.00     39887
+
+    accuracy                           0.50     80000
+   macro avg       0.25      0.50      0.33     80000
+weighted avg       0.25      0.50      0.33     80000
+*************************
+Validation on Epoch 1 
+Average loss: 0.6981897354125977 
+Average accuracy: 0.48587719298245613 
+Average thresholded accuracy: 0.49394736842105263 
+F1 score 0.3521440931076236 
+
+              precision    recall  f1-score   support
+
+           0       0.49      0.95      0.65      5631
+           1       0.41      0.04      0.07      5769
+
+    accuracy                           0.49     11400
+   macro avg       0.45      0.49      0.36     11400
+weighted avg       0.45      0.49      0.35     11400
+==================================================
