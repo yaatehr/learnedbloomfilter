@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
 	// 	<< chrono::duration_cast<chrono::nanoseconds>(end - start).count()
 	// 	<< " ns" << endl;
 
+      std::cout << argv[0] << "\n" << argv[1] << std::endl;
+
       std::string dataset_path = argc < 1 ? DATASET_PATH : argv[0];
       std::string model_path = argc < 2 ? MODEL_PATH : std::string(argv[0]).append("/").append(argv[1]).append(".pt");
       std::string container_path = argc < 2 ? CONTAINER_PATH : std::string(argv[0]).append("/").append(argv[1]).append("_container.pt");
