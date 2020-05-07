@@ -50,7 +50,7 @@ class GRUBasic(nn.Module):
         return h0
 
     def forward(self, sequence):
-        # print('Sequence shape:', sequence.shape)
+        print('Sequence shape:', sequence.shape)
         gru_out, self.hidden = self.gru(
             sequence.view(len(sequence), 1, -1), self.hidden
         )
@@ -69,7 +69,7 @@ class GRUBasicX(nn.Module):
     def __init__(self, args, model_path, num_classes=1):
         super(GRUBasic, self).__init__()
         self.hidden_dim = args.hidden_dim
-        self.bi = args.bidirectional
+        self.bi = args.bidirectional == 1
         self.num_layers = 1 #TODO remove this param or fix this
         self.num_classes = num_classes
         self.embedding_depth = (
@@ -109,7 +109,7 @@ class GRUBasicX(nn.Module):
         return h0
 
     def forward(self, sequence):
-        # print('Sequence shape:', sequence.shape)
+        print('Sequence shape:', sequence.shape)
         gru_out, self.hidden = self.gru(
             sequence.view(len(sequence), 1, -1), self.hidden
         )
