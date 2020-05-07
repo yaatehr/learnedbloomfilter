@@ -109,9 +109,10 @@ class GRUBasicX(nn.Module):
         return h0
 
     def forward(self, sequence):
-        print('Sequence shape:', sequence.shape)
-        gru_out, self.hidden = self.gru(
-            sequence.view(len(sequence), 1, -1), self.hidden
+        # print('Sequence shape:', sequence.shape)
+        sequence = sequence.view(len(sequence), 1, -1)
+        gru_out, _hidden = self.gru(#no longer update hidden state
+            sequence
         )
 
         out_space = self.hidden2out(gru_out[:, -1])
