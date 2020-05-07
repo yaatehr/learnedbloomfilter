@@ -76,7 +76,7 @@ for(int i = 0; i < argc; i++) {
       std::ofstream output_file;
       output_file.open(std::string(argv[2]).append(".csv"));
       // write header to file
-      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles\n";
+      output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture init";
             std::cout << " with max num val int: " << std::numeric_limits<int>::max() << std::endl;
@@ -164,11 +164,14 @@ for(int i = 0; i < argc; i++) {
             double exp_fpr = (double) numFalsePos * 100 / (double)(numItems);
             auto num_hashes = filter->filter->hash_count();
             auto table_size = filter->filter->size();
+            double gbf_effective_fpr = filter->filter->effective_fpp();
+            int num_fallback_eles = filter->filter->element_count();
 
             output_file << exp_fpr  << "," << num_hashes << "," << table_size  << ",";
             output_file << tau[i] <<  ",";
             output_file << COMPOUND_MODEL_SIZE << ",";
-            output_file << fpr[j] << "," << insert_timing_ns << "," << query_timing_ns << "," << numItems <<"\n";
+            output_file << fpr[j] << "," << insert_timing_ns << "," << query_timing_ns << "," << numItems << ",";
+            output_file << projected_ele_count << "," << tau_fallback_percentage[i] << "," << num_fallback_eles << "," << gbf_effective_fpr << "\n";
 
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture teardown entered";
