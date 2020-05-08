@@ -127,6 +127,9 @@ for(int i = 0; i < argc; i++) {
             filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);
 
+            auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
+            f->set_tau(t);
+
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Entering TestBloomFilterStringQuery loop" << std::endl;
 #endif
@@ -151,15 +154,14 @@ for(int i = 0; i < argc; i++) {
 	auto insert_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start).count();
 
             // auto numFalseNeg = filter->batch_query_count(valid_tensor_indices, true);
-            std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
             if(evaluate_filter) {
-                  auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
-                  f->set_tau(t);
+                  std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
+
 
                   auto num_bypassed_inserts = f->batch_insert(valid_tensor_indices);
-                  std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
+                  std::cout << "number of bypassed inserts in the full sized  backup model" << num_bypassed_inserts << std::endl;
                   auto nfp = f->batch_query_count(invalid_tensor_indices, false);
-                  double expfpr = (double) numFalsePos * 100 / (double)(numItems);
+                  double expfpr = (double) nfp * 100 / (double)(numItems);
 
                   std::cout << "number of false positives for the eval model (with full sized backup):\n" << nfp << "\nWith an fpr of: " << expfpr << std::endl;
             }
