@@ -261,7 +261,7 @@ def run(args):
 
     now = datetime.now()
     logdir = args.log_path + args.model_name + "/"
-    os.makedirs(logdir)
+    os.makedirs(logdir, exist_ok=True)
     log_file = logdir + "log.txt"
     writer = SummaryWriter(logdir)
 

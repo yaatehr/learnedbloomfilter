@@ -54,7 +54,7 @@ def get_evaluation(y_true, y_prob, args, list_metrics):
     if "accuracy" in list_metrics:
         output["accuracy"] = metrics.accuracy_score(y_true, y_pred)
     if "f1" in list_metrics:
-        output["f1"] = metrics.f1_score(y_true, y_pred, average="weighted")
+        output["f1"] = metrics.f1_score(y_true, y_pred, average="binary")
     if "bloom_threshold_accuracy" in list_metrics:
         bloom_pred = (y_prob > args.tau).astype(np.float32)
         # print(bloom_pred)
@@ -225,7 +225,7 @@ def get_model_size(model, args, input_features=None, verbose=False):
         input_size = tuple(input_size)
     except:
         pass
-    
+
     print("input size: ", input_size)
 
     (total_size, total_input_size, total_output_size, total_params_size), (total_params, trainable_params) = pytorch_modelsize.summary_tuple(model, input_size=input_size)
