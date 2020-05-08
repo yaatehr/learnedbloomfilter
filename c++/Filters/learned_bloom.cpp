@@ -119,7 +119,7 @@ public:
    {
       try
       {
-         return std::make_shared<torch::jit::script::Module>(torch::jit::load(MODEL_PATH));
+         return std::make_shared<torch::jit::script::Module>(torch::jit::load(model_path));
       }
       catch (const c10::Error &e)
       {
