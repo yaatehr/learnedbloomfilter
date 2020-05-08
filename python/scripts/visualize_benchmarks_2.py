@@ -9,15 +9,20 @@ import os
 round_to_n = lambda x, n: round(x, -int(floor(log10(abs(x)))) + (n - 1))
 
 # test_name = "explicit_always_false"
-test_name = "timestamp_lstm_2"
+# test_name = "timestamp_lstm_3"
+test_name = "timestamp_gru_1"
 fixture_data = pd.read_csv(f"../../input/{test_name}.csv", index_col=False)
 
 fixture_data["compound_size"] = fixture_data["table_size"] + fixture_data["lbf_size"]
-fixture_data["ns_per_insert"] = fixture_data["insert_time"]/fixture_data.head(0)["num_eles"] #TODO fix, these do not work
-fixture_data["ns_per_query"] = fixture_data["query_time"]/fixture_data.head(0)["num_eles"] #TODO fix, these do not work
+print(fixture_data.columns)
+print(fixture_data["num_eles_tested"][0])
+
+fixture_data["ns_per_insert"] = fixture_data["insert_time"]/fixture_data["num_eles_tested"][0] #TODO fix, these do not work
+fixture_data["ns_per_query"] = fixture_data["query_time"]/fixture_data["num_eles_tested"][0] #TODO fix, these do not work
 
 # columns = ["function", "projected_eles", "inv_max_fpr", "empirical_fpr", "num_hashes", "table_size", "batch_size", "len_gen_eles", "iterations", "real_time", "cpu_time"]
-columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles"]
+# columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles_tested", "projected_fallback_count","projected_fallback_percentage", "fallback_count","gbf_effective_fpr"]
+columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles_tested", "projected_fallback_count","projected_fallback_percentage", "fallback_count","gbf_effective_fpr"]
 
 fixture_data = fixture_data[columns]
 
@@ -32,6 +37,8 @@ print(fixture_data.head(10))
 gbf_data = fixture_data[(fixture_data["tau"] ==1)]
 gbf_data = gbf_data.sort_values("table_size")
 lbf_data = fixture_data[(fixture_data["tau"] !=1)]
+print(gbf_data.head(10))
+
 
 # we want to gorup by batch_size because fprs are comperable
 # fpr==num_hashes should be shown against the table size
@@ -53,6 +60,7 @@ if not os.path.exists(f"laptop_benchmarks/{test_name}"):
 for ind, query in enumerate(queries): 
     for group1_label, group1 in query.groupby("tau"):
         g = group1.sort_values("compound_size")
+        print(g.head(10))
         fig, ax = plt.subplots()
         ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
         ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
