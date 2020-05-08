@@ -147,7 +147,7 @@ def export_lstm(args, export_dataset=True):
             
             return tensor_list, label_list
 
-        # validation_generator = DataLoader(validation_set, **export_params)
+        validation_generator = DataLoader(validation_set, **export_params)
         test_generator = DataLoader(test_set, **export_params)
 
         i, (feats, labels) = list(enumerate(test_generator))[0]
@@ -160,17 +160,17 @@ def export_lstm(args, export_dataset=True):
         num_pos_samples = test_set.get_num_positive_samples()
         print(f"found best tau: {best_tau[0]} with fpr: {best_tau[1]}")
 
-        # total_errors = test_model(base_model, validation_generator) 
+        total_errors = test_model(base_model, validation_generator) 
         # total_errors += test_model(base_model, test_generator)
-        # print("base model had %d errors total" % total_errors)
+        print("base model had %d errors total" % total_errors)
 
-        # total_errors = test_model(model, validation_generator) 
+        total_errors = test_model(model, validation_generator) 
         # total_errors += test_model(model, test_generator)
-        # print("export model had %d errors total" % total_errors)
+        print("export model had %d errors total" % total_errors)
 
-        # total_errors = test_model(traced_script_module, validation_generator) 
+        total_errors = test_model(traced_script_module, validation_generator) 
         # total_errors += test_model(traced_script_module, test_generator)
-        # print("traced_script_module had %d errors total" % total_errors)
+        print("traced_script_module had %d errors total" % total_errors)
 
         # tensor_list, label_list = extract_data(validation_set)
         tensor_list, label_list = extract_data(test_set)
