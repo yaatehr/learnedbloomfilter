@@ -75,7 +75,7 @@ for(int i = 0; i < argc; i++) {
 
 
       std::ofstream output_file;
-      output_file.open(std::string(argv[2]).append(".csv"));
+      output_file.open(std::string(argv[2]).append("_fullsize.csv"));
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
@@ -123,12 +123,13 @@ for(int i = 0; i < argc; i++) {
             bool evaluate_filter = i + j == 0;// only evaluate on the first run
 
             double t = tau[i];
-            int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
-            filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
+            // int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
+
+            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);
 
-            auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
-            f->set_tau(t);
+            // auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
+            // f->set_tau(t);
 
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Entering TestBloomFilterStringQuery loop" << std::endl;
@@ -154,17 +155,17 @@ for(int i = 0; i < argc; i++) {
 	auto insert_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start).count();
 
             // auto numFalseNeg = filter->batch_query_count(valid_tensor_indices, true);
-            if(evaluate_filter) {
-                  std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
+            // if(evaluate_filter) {
+            //       std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
 
 
-                  auto num_bypassed_inserts = f->batch_insert(valid_tensor_indices);
-                  std::cout << "number of bypassed inserts in the full sized  backup model" << num_bypassed_inserts << std::endl;
-                  auto nfp = f->batch_query_count(invalid_tensor_indices, false);
-                  double expfpr = (double) nfp * 100 / (double)(numItems);
+            //       auto num_bypassed_inserts = f->batch_insert(valid_tensor_indices);
+            //       std::cout << "number of bypassed inserts in the full sized  backup model" << num_bypassed_inserts << std::endl;
+            //       auto nfp = f->batch_query_count(invalid_tensor_indices, false);
+            //       double expfpr = (double) nfp * 100 / (double)(numItems);
 
-                  std::cout << "number of false positives for the eval model (with full sized backup):\n" << nfp << "\nWith an fpr of: " << expfpr << std::endl;
-            }
+            //       std::cout << "number of false positives for the eval model (with full sized backup):\n" << nfp << "\nWith an fpr of: " << expfpr << std::endl;
+            // }
 
 
 
@@ -188,7 +189,7 @@ for(int i = 0; i < argc; i++) {
             output_file << tau[i] <<  ",";
             output_file << COMPOUND_MODEL_SIZE << ",";
             output_file << fpr[j] << "," << insert_timing_ns << "," << query_timing_ns << "," << numItems << ",";
-            output_file << projected_ele_count << "," << tau_fallback_percentage[i] << "," << num_fallback_eles << "," << gbf_effective_fpr << "\n";
+            output_file << PROJECTED_ELE_COUNT << "," << tau_fallback_percentage[i] << "," << num_fallback_eles << "," << gbf_effective_fpr << "\n";
 
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture teardown entered";
