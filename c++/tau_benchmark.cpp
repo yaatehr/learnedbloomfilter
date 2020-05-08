@@ -6,6 +6,7 @@
 #define COMPOUND_MODEL_SIZE  6812
 #define ARG_LENGTH_T 20
 #define ARG_LENGTH_F 30
+#define MAX_SANITY_CHECK_SIZE 50000
 
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 // #ifndef USER_DEBUG_STATEMENTS
@@ -119,13 +120,12 @@ for(int i = 0; i < argc; i++) {
 #ifdef USER_DEBUG_STATEMENTS
             std::cout << "fixture setup entered";
 #endif
-            bool evaluate_filter = false;// only evaluate on the first run
+            bool evaluate_filter = i + j == 0;// only evaluate on the first run
 
             double t = tau[i];
             int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
             filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);
-      
 
 #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Entering TestBloomFilterStringQuery loop" << std::endl;
@@ -146,12 +146,23 @@ for(int i = 0; i < argc; i++) {
 #endif
             // insert all valid tensors an strings
 	auto insert_start = std::chrono::steady_clock::now();
-            filter->insert(valid_tensor_indices);
+            auto num_bypassed_inserts = filter->batch_insert(valid_tensor_indices);
 	auto insert_end = std::chrono::steady_clock::now();
 	auto insert_timing_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start).count();
 
-            auto numFalseNeg = filter->batch_query_count(valid_tensor_indices, true);
-            // std::cout << "number of false negatives: " << numFalseNeg << std::endl;
+            // auto numFalseNeg = filter->batch_query_count(valid_tensor_indices, true);
+            std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
+            if(evaluate_filter) {
+                  auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
+                  f->set_tau(t);
+
+                  auto num_bypassed_inserts = f->batch_insert(valid_tensor_indices);
+                  std::cout << "number of bypassed inserts in the reduced size compound model" << num_bypassed_inserts << std::endl;
+                  auto nfp = f->batch_query_count(invalid_tensor_indices, false);
+                  double expfpr = (double) numFalsePos * 100 / (double)(numItems);
+
+                  std::cout << "number of false positives for the eval model (with full sized backup):\n" << nfp << "\nWith an fpr of: " << expfpr << std::endl;
+            }
 
 
 
@@ -166,6 +177,10 @@ for(int i = 0; i < argc; i++) {
             auto table_size = filter->filter->size();
             double gbf_effective_fpr = filter->filter->effective_fpp();
             int num_fallback_eles = filter->filter->element_count();
+
+            if(evaluate_filter) {
+                  std::cout << "number of false positives for modified compound model (with smaller backup) :\n" << numFalsePos << "\n with fpr of: " << exp_fpr << std::endl;
+            }
 
             output_file << exp_fpr  << "," << num_hashes << "," << table_size  << ",";
             output_file << tau[i] <<  ",";

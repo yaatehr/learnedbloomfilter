@@ -9,7 +9,8 @@ import os
 round_to_n = lambda x, n: round(x, -int(floor(log10(abs(x)))) + (n - 1))
 
 # test_name = "explicit_always_false"
-test_name = "timestamp_lstm_3"
+# test_name = "timestamp_lstm_3"
+test_name = "timestamp_gru_1"
 fixture_data = pd.read_csv(f"../../input/{test_name}.csv", index_col=False)
 
 fixture_data["compound_size"] = fixture_data["table_size"] + fixture_data["lbf_size"]

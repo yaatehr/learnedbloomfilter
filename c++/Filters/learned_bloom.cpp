@@ -20,6 +20,10 @@
 #define DATASET_PATH "/home/yaatehr/programs/learnedbloomfilter/input/timestamp_dataset"
 #endif
 
+#ifndef MAX_SANITY_CHECK_SIZE
+#define MAX_SANITY_CHECK_SIZE 50000
+#endif
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -305,6 +309,8 @@ public:
       if (!prediction)
       {
             filter->insert(data_strings[index]);
+      } else {
+         std::cout << "skipped the bloom insertion" << std::endl;
       }
    }
 
@@ -312,6 +318,22 @@ public:
       for (auto i : indices) {
          insert(i);
       }
+   }
+
+   int batch_insert(std::vector<int> indices) {
+      int num_items_not_inserted = 0;
+      auto predictions = query(indices);
+      for(int i=0; i < predictions.size(); i ++ ) { 
+      bool p = predictions[i];   
+         
+      if(!p){
+           filter->insert(data_strings[indices[i]]);
+         }
+         else{ 
+            num_items_not_inserted++;
+         }
+      }
+      return num_items_not_inserted;
    }
 
    /**
@@ -481,12 +503,24 @@ private:
 // #ifdef USER_DEBUG_STATEMENTS
       std::cout << "Learned bloom filter Evaluating classifier on all data" << std::endl;
 // #endif
-      auto label_accessor = Y->accessor<float, 1>();
       unsigned int num_correct = 0;
       int num_positive_samples = 0;
       int num_positive_predictions = 0;
-      auto predictions = predict_batch(*X);
-      for (unsigned long j = 0; j < predictions.size(); j++)
+      std::vector<bool> predictions;
+
+      auto label_accessor = Y->accessor<float, 1>();
+      int num_labels = label_accessor.size(0);
+      if(num_labels > MAX_SANITY_CHECK_SIZE) {
+         num_labels = MAX_SANITY_CHECK_SIZE;
+         std::vector<int> index_vec(MAX_SANITY_CHECK_SIZE);
+         std::iota(index_vec.begin(), index_vec.end(), 0);
+         torch::Tensor data = select_tensor_subset(*X, index_vec, MAX_SANITY_CHECK_SIZE);
+         predictions = predict_batch(data);
+      } else {
+            predictions = predict_batch(*X);
+      }
+
+      for (unsigned long j = 0; j < num_labels; j++)
       {
          if (predictions[j])
          {
@@ -504,7 +538,7 @@ private:
       }
 
 // #ifdef USER_DEBUG_STATEMENTS
-      std::cout << "Learned bloom filter classifier accuracy was: " << (float)num_correct / (float)label_accessor.size(0) << std::endl;
+      std::cout << "Learned bloom filter classifier accuracy was: " << (float)num_correct / (float)num_labels << std::endl;
       std::cout << "with: " << num_positive_samples << " positive samples" << std::endl;
       std::cout << "and: " << num_positive_predictions << " positive predictions" << std::endl;
 // #endif
@@ -520,6 +554,8 @@ bool evaluate_plaintext_labels() {
    } 
 
    int num_errors = 0;
+
+   num_labels = num_labels < MAX_SANITY_CHECK_SIZE ? num_labels : MAX_SANITY_CHECK_SIZE;
 
    for (int i = 0; i < num_labels; i++) {
       auto label_i = a[i];
