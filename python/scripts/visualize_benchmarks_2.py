@@ -10,7 +10,8 @@ round_to_n = lambda x, n: round(x, -int(floor(log10(abs(x)))) + (n - 1))
 
 # test_name = "explicit_always_false"
 # test_name = "timestamp_lstm_3"
-test_name = "timestamp_gru_1"
+test_name = "timestamp_embedding_lstm_4"
+# test_name = "timestamp_gru_1"
 fixture_data = pd.read_csv(f"../../input/{test_name}.csv", index_col=False)
 
 fixture_data["compound_size"] = fixture_data["table_size"] + fixture_data["lbf_size"]
@@ -37,7 +38,7 @@ print(fixture_data.head(10))
 gbf_data = fixture_data[(fixture_data["tau"] ==1)]
 gbf_data = gbf_data.sort_values("table_size")
 lbf_data = fixture_data[(fixture_data["tau"] !=1)]
-print(gbf_data.head(10))
+print(gbf_data.tail(10))
 
 
 # we want to gorup by batch_size because fprs are comperable
@@ -60,7 +61,7 @@ if not os.path.exists(f"laptop_benchmarks/{test_name}"):
 for ind, query in enumerate(queries): 
     for group1_label, group1 in query.groupby("tau"):
         g = group1.sort_values("compound_size")
-        print(g.head(10))
+        print(g.tail(10))
         fig, ax = plt.subplots()
         ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
         ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
