@@ -298,6 +298,23 @@ std::tuple<std::vector<int>, std::vector<std::string>> load_dataset(std::string 
 }
 
 
+int load_compound_filter_size(std::string root) {
+    std::string file_path = root + "/metadata.txt";
+    std::fstream in(file_path, std::ios::in);
+    std::string line;
+    std::string input;
+
+   for(int i = 0; i < 4; i++){ 
+      getline(in, line);
+      if( i == 3) {
+         std::cout << line << std::endl;
+         std::stringstream s(line);
+         s >> input >> input >> input >> input;
+         std::cout << input << std::endl;
+      }  
+    }
+    return (int) stod(input);
+}
 
 template<typename T>
 std::vector<double> linspace(T start_in, T end_in, int num_in)
