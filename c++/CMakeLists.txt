@@ -30,7 +30,7 @@ include_directories(
 # add_subdirectory(Filters)
 # add_executable(learned_b rand_learned_benchmark.cpp)
 add_executable(learned_b tau_benchmark.cpp)
-add_executable(learned_b_fullsize tau_fullsize_benchmark.cpp)
+
 # add_executable(learned_b Filters/learned_bloom.cpp)
 # add_executable(learned_b parse_example.cpp)
 
@@ -114,12 +114,12 @@ find_package(Threads REQUIRED)
 list(APPEND Z3_DEPENDENT_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 target_link_libraries(learned_b Threads::Threads)
-target_link_libraries(learned_b_fullsize Threads::Threads)
+
 
 
 #TORCH
 target_link_libraries(learned_b "${TORCH_LIBRARIES}")
-target_link_libraries(learned_b_fullsize "${TORCH_LIBRARIES}")
+
 # target_include_directories(learned_b PUBLIC "${TORCH_LIBRARIES}")
 
 #MY DEPS
@@ -130,7 +130,7 @@ target_link_libraries(learned_b_fullsize "${TORCH_LIBRARIES}")
 
 # SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS}")
 set_property(TARGET learned_b PROPERTY CXX_STANDARD 14)
-set_property(TARGET learned_b_fullsize PROPERTY CXX_STANDARD 14)
+
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL
     "A flag showing that CMake has configured at least once.")
 
