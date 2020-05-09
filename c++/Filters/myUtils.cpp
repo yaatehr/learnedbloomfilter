@@ -232,7 +232,6 @@ std::vector<std::tuple<std::string /*key*/, int64_t /*label*/>> ReadCsv(std::str
     return csv;
 }
 
-
 std::tuple<std::vector<double>, std::vector<double>> load_tau_to_fpr(std::string root){
    std::string file_path = root + "/tau_fpr.txt";
    std::fstream in(file_path, std::ios::in);
