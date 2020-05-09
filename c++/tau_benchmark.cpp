@@ -72,6 +72,8 @@ for(int i = 0; i < argc; i++) {
       std::string dataset_path = argc < 2 ? DATASET_PATH : argv[1];
       std::string model_path = argc < 3 ? MODEL_PATH : std::string(argv[1]).append("/").append(argv[2]).append(".pt");
       std::string container_path = argc < 3 ? CONTAINER_PATH : std::string(argv[1]).append("/").append(argv[2]).append("_container.pt");
+      auto compound_model_size = load_compound_filter_size(dataset_path);
+      std::cout << "compound model size was: " << compound_model_size <<std::endl;
 
 
       std::ofstream output_file;
@@ -187,7 +189,7 @@ for(int i = 0; i < argc; i++) {
 
             output_file << exp_fpr  << "," << num_hashes << "," << table_size  << ",";
             output_file << tau[i] <<  ",";
-            output_file << COMPOUND_MODEL_SIZE << ",";
+            output_file << compound_model_size << ",";
             output_file << fpr[j] << "," << insert_timing_ns << "," << query_timing_ns << "," << numItems << ",";
             output_file << PROJECTED_ELE_COUNT << "," << tau_fallback_percentage[i] << "," << num_fallback_eles << "," << gbf_effective_fpr << "\n";
 
