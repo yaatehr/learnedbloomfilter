@@ -10,10 +10,13 @@ round_to_n = lambda x, n: round(x, -int(floor(log10(abs(x)))) + (n - 1))
 
 # test_name = "explicit_always_false"
 # test_name = "timestamp_lstm_3"
-test_name = "timestamp_gru_1"
+test_name = "timestamp_embedding_lstm_4"
+# test_name = "timestamp_gru_1"
 fixture_data = pd.read_csv(f"../../input/{test_name}.csv", index_col=False)
+full_size_fixture_data = pd.read_csv(f"../../input/{test_name}_fullsize.csv", index_col=False)
 
 fixture_data["compound_size"] = fixture_data["table_size"] + fixture_data["lbf_size"]
+full_size_fixture_data["compound_size"] = full_size_fixture_data["table_size"] + full_size_fixture_data["lbf_size"]
 print(fixture_data.columns)
 print(fixture_data["num_eles_tested"][0])
 
@@ -23,8 +26,10 @@ fixture_data["ns_per_query"] = fixture_data["query_time"]/fixture_data["num_eles
 # columns = ["function", "projected_eles", "inv_max_fpr", "empirical_fpr", "num_hashes", "table_size", "batch_size", "len_gen_eles", "iterations", "real_time", "cpu_time"]
 # columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles_tested", "projected_fallback_count","projected_fallback_percentage", "fallback_count","gbf_effective_fpr"]
 columns = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "ns_per_insert", "ns_per_query", "num_eles_tested", "projected_fallback_count","projected_fallback_percentage", "fallback_count","gbf_effective_fpr"]
+columns2 = ["empirical_fpr", "num_hashes", "target_fpr", "tau", "table_size", "compound_size", "num_eles_tested", "projected_fallback_count","projected_fallback_percentage", "fallback_count","gbf_effective_fpr"]
 
 fixture_data = fixture_data[columns]
+full_size_fixture_data = full_size_fixture_data[columns2]
 
 print(fixture_data.head(10))
 
@@ -37,7 +42,16 @@ print(fixture_data.head(10))
 gbf_data = fixture_data[(fixture_data["tau"] ==1)]
 gbf_data = gbf_data.sort_values("table_size")
 lbf_data = fixture_data[(fixture_data["tau"] !=1)]
-print(gbf_data.head(10))
+full_size_gbf_data = full_size_fixture_data[(full_size_fixture_data["tau"] ==1)]
+full_size_gbf_data = full_size_gbf_data.sort_values("table_size")
+full_size_lbf_data = full_size_fixture_data[(full_size_fixture_data["tau"] !=1)]
+
+
+# filtered_summaries = pd.merge(left=senate_candidates, right=cand_summary, left_on=["CAND_ID"], right_on=["CAND_ID"])
+
+
+
+print(gbf_data.tail(10))
 
 
 # we want to gorup by batch_size because fprs are comperable
@@ -58,30 +72,35 @@ if not os.path.exists(f"laptop_benchmarks/{test_name}"):
     os.makedirs(f"laptop_benchmarks/{test_name}")
 
 for ind, query in enumerate(queries): 
+    full_size_groups = full_size_lbf_data.groupby("tau")
     for group1_label, group1 in query.groupby("tau"):
         g = group1.sort_values("compound_size")
-        print(g.head(10))
+        fg = full_size_groups.get_group(group1_label).sort_values("compound_size")
+        print(g.tail(10))
+        print(fg.tail(10))
         fig, ax = plt.subplots()
-        ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+        # ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+        ax.plot(fg.compound_size, fg.empirical_fpr, marker='.', linestyle='-', label=f"full {group1_label}", color="g")
         ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
+        ax.plot(full_size_gbf_data.table_size, full_size_gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic fullsize", color="m")
         ax.legend()
-        ax.title.set_text("%s, tau: %d" % (test_name, group1_label))
+        ax.title.set_text(f"{test_name}, tau: {group1_label}%" )
         ax.set_ylabel("Empirical FPR")
         ax.set_xlabel("Table Size (bytes)")
         plt.savefig(f"laptop_benchmarks/{test_name}/tau-{group1_label}.png")
         plt.clf()
         plt.close()
 
-    for group1_label, group1 in query.groupby("tau"):
-        g = group1.sort_values("compound_size")
-        fig, ax = plt.subplots()
-        ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
-        ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
-        ax.legend()
-        ax.title.set_text("%s, tau: %d" % (test_name, group1_label))
-        ax.set_ylabel("Empirical FPR")
-        ax.set_xscale("log")
-        ax.set_xlabel("Table Size (bytes)")
-        plt.savefig(f"laptop_benchmarks/{test_name}/tau-{group1_label}-log.png")
-        plt.clf()
-        plt.close()
+    # for group1_label, group1 in query.groupby("tau"):
+    #     g = group1.sort_values("compound_size")
+    #     fig, ax = plt.subplots()
+    #     ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+    #     ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
+    #     ax.legend()
+    #     ax.title.set_text("%s, tau: %d" % (test_name, group1_label))
+    #     ax.set_ylabel("Empirical FPR")
+    #     ax.set_xscale("log")
+    #     ax.set_xlabel("Table Size (bytes)")
+    #     plt.savefig(f"laptop_benchmarks/{test_name}/tau-{group1_label}-log.png")
+    #     plt.clf()
+    #     plt.close()
