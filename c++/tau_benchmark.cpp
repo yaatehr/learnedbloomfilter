@@ -77,7 +77,7 @@ for(int i = 0; i < argc; i++) {
 
 
       std::ofstream output_file;
-      output_file.open(std::string(argv[2]).append("_fullsize.csv"));
+      output_file.open(std::string(argv[2]).append(".csv"));
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
@@ -125,7 +125,7 @@ for(int i = 0; i < argc; i++) {
             bool evaluate_filter = i + j == 0;// only evaluate on the first run
 
             double t = tau[i];
-            int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
+            int projected_ele_count = PROJECTED_ELE_COUNT;
 
             filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);

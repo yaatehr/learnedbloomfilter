@@ -79,7 +79,7 @@ for ind, query in enumerate(queries):
         print(g.tail(10))
         print(fg.tail(10))
         fig, ax = plt.subplots()
-        ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
+        # ax.plot(g.compound_size, g.empirical_fpr, marker='.', linestyle='-', label=group1_label, color="b")
         ax.plot(fg.compound_size, fg.empirical_fpr, marker='.', linestyle='-', label=f"full {group1_label}", color="g")
         ax.plot(gbf_data.table_size, gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic BF", color="r")
         ax.plot(full_size_gbf_data.table_size, full_size_gbf_data.empirical_fpr, marker='.', linestyle='-', label="Generic fullsize", color="m")
