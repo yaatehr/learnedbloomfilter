@@ -116,6 +116,7 @@ def main_loop(args):
     #export_model.export_lstm(args)
     dataset_path = os.path.join(args.root, f'input/{args.dataset_prefix}')
     os.system(f"cd ../c++/build/ && make && ./bin/learned_b {dataset_path} {args.model_name}")
+    os.system(f"./bin/learned_b_fullsize {dataset_path} {args.model_name}")
     # extractor.process_crawl()
     if args.debug:
         print("DEBUG: end main_loop")
