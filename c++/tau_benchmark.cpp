@@ -15,7 +15,6 @@
 
 #include <iostream>
 #include <string>
-#include <benchmark/benchmark.h>
 #include <vector>
 #include <map>
 #include <fstream>
