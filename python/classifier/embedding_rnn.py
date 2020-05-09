@@ -50,8 +50,8 @@ class GRUBasic(nn.Module):
         return h0
 
     def forward(self, sequence):
-        print('Sequence shape:', sequence.shape)
-        gru_out, self.hidden = self.gru(
+        # print('Sequence shape:', sequence.shape)
+        gru_out, hidden = self.gru(
             sequence.view(len(sequence), 1, -1), self.hidden
         )
         if self.built_in_dropout:
@@ -60,6 +60,7 @@ class GRUBasic(nn.Module):
             )
         else:
             out_space = self.hidden2out(gru_out[:, -1])
+        self.hidden = hidden
         #TODO experiment with adding a relu here, does it increase accuracy?
         out_scores = torch.sigmoid(out_space).squeeze()
         return out_scores
