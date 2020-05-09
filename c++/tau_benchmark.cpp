@@ -125,9 +125,9 @@ for(int i = 0; i < argc; i++) {
             bool evaluate_filter = i + j == 0;// only evaluate on the first run
 
             double t = tau[i];
-            // int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
+            int projected_ele_count = tau_fallback_percentage[i]*PROJECTED_ELE_COUNT;
 
-            filter = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
+            filter = new LearnedBloomFilter(projected_ele_count, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
             filter->set_tau(t);
 
             // auto f = new LearnedBloomFilter(PROJECTED_ELE_COUNT, fpr[j], classifier, data, labels, validIndices, invalidIndices, key_strings, plaintext_labels, evaluate_filter);
