@@ -1,6 +1,6 @@
 #define MIN_TAU 0.35
 #define MAX_TAU 0.95
-#define MIN_FPR 0.0001
+#define MIN_FPR 0.00001
 #define MAX_FPR 0.05
 #define PROJECTED_ELE_COUNT 50000
 #define COMPOUND_MODEL_SIZE  6812
@@ -52,7 +52,7 @@
 void benchmark_run(std::string dataset_path, std::string model_path, std::string container_path, std::string model_name, int compound_model_size) {
 
       std::ofstream output_file;
-      output_file.open(model_name.append(".csv"));
+      output_file.open(model_name.append("_lowfpr.csv"));
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
@@ -182,7 +182,7 @@ void benchmark_run(std::string dataset_path, std::string model_path, std::string
 void fullsize_benchmark_run(std::string dataset_path, std::string model_path, std::string container_path, std::string model_name, int compound_model_size) {
 
       std::ofstream output_file;
-      output_file.open(model_name.append("_fullsize.csv"));
+      output_file.open(model_name.append("_fullsize_lowfpr.csv"));
       // write header to file
       output_file << "empirical_fpr,num_hashes,table_size,tau,lbf_size,target_fpr,insert_time,query_time,num_eles_tested,projected_fallback_count,projected_fallback_percentage,fallback_count,gbf_effective_fpr\n";
 #ifdef USER_DEBUG_STATEMENTS
