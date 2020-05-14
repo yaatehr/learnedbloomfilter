@@ -361,7 +361,8 @@ def run(args):
     #     ) = pickle.load(open(cached_data_path, "rb"))
     #     print("loaded cached training data")
 
-    dataset_path = os.path.join(args.root, f"input/{args.dataset_prefix}/train_val_test.pkl")
+    # dataset_path = os.path.join(args.root, f"input/{args.dataset_prefix}/train_val_test.pkl")
+    dataset_path = os.path.join(args.root, f"input/dataset/train_val_test.pkl")
     if not os.path.exists(dataset_path):
         # urls_by_category_path = os.path.join(args.root, "python/scripts/url_load_backup.pkl")
         # with open(urls_by_category_path, 'rb') as fp:
@@ -428,7 +429,13 @@ def run(args):
     #     # return
     i, (feats, labels) = list(enumerate(training_generator))[0]
     model_size = utils.get_model_size(model, args, input_features=feats)
+    print('\n\n\n\n')
     args.model_size_in_bits = model_size + args.embedding_size_bits
+    print("Model size: ", model_size)
+    print("Embedding size: ", args.embedding_size_bits)
+    print('\n\n\n\n')
+    if True:
+        return
     gbf_size = utils.get_bf_size(.0001, test_set.get_num_positive_samples())#TODO Parameterize this
     if args.model_size_in_bits > gbf_size:
         print("NOTE: this classifier is too large and will not beat out a GBF, please reconfigure and try again")
